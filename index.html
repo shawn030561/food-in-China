@@ -2421,7 +2421,7 @@
             (dish) => `
     <div class="bg-white border border-stone-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
       <div class="relative h-44 overflow-hidden">
-        <img src="${dish.img}" alt="${dish.name}" class="w-full h-full object-cover" onerror="this.parentElement.style.background='linear-gradient(135deg,#f5f0e8,#e5d5b5)';this.style.display='none'">
+        <img src="${dish.img}" alt="${dish.name}" class="w-full h-full object-cover" onerror="this.outerHTML='<div class=\'bg-gradient-to-br from-mist to-stone-200 h-full w-full flex items-center justify-center\'><span class=\'text-4xl\'>🍽</span></div>'">
       </div>
       <div class="p-5">
         <h4 class="font-serif text-lg font-bold mb-2">${dish.name}</h4>
