@@ -2933,6 +2933,94 @@
         });
       });
 
+      // ===================================================
+      // 7b. localStorage 留言持久化
+      // ===================================================
+      const STORAGE_KEY = "shizaizhongguo_messages";
+
+      function saveMessages() {
+        // 只保存用户提交的留言（跳过预设的示例留言）
+        const cards = document.querySelectorAll("#messagesList .msg-card.user-msg");
+        const messages = [];
+        cards.forEach((card) => {
+          messages.push({
+            nickname: card.dataset.nickname || "",
+            email: card.dataset.email || "",
+            cuisine: card.dataset.cuisine || "",
+            rating: parseInt(card.dataset.rating) || 5,
+            content: card.dataset.content || "",
+            date: card.dataset.date || "",
+          });
+        });
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+        } catch (e) {
+          // localStorage 已满或不可用，静默处理
+        }
+      }
+
+      function loadMessages() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return;
+          const messages = JSON.parse(raw);
+          if (!Array.isArray(messages)) return;
+          const list = document.getElementById("messagesList");
+          // 移除之前加载的用户留言（保留预设的示例留言）
+          list.querySelectorAll(".msg-card.user-msg").forEach((el) => el.remove());
+          // 倒序渲染，最新的在最上面
+          messages.reverse().forEach((m) => {
+            const card = createMessageCard(
+              m.nickname,
+              m.email,
+              m.cuisine,
+              m.rating,
+              m.content,
+              m.date,
+            );
+            list.insertBefore(card, list.firstChild);
+          });
+        } catch (e) {
+          // 数据损坏，静默处理
+        }
+      }
+
+      function createMessageCard(nickname, email, cuisine, rating, content, date) {
+        const stars =
+          rating > 0
+            ? "★".repeat(rating) + "☆".repeat(5 - rating)
+            : "★★★★★";
+        const cuisineLabel = cuisine ? `${escapeHtml(cuisine)}爱好者` : "美食爱好者";
+
+        const card = document.createElement("div");
+        card.className = "msg-card user-msg bg-white border border-vermilion p-5";
+        card.dataset.nickname = nickname;
+        card.dataset.email = email;
+        card.dataset.cuisine = cuisine;
+        card.dataset.rating = rating;
+        card.dataset.content = content;
+        card.dataset.date = date;
+
+        card.innerHTML = `
+    <div class="flex justify-between items-start mb-2">
+      <div>
+        <span class="font-medium text-sm">${escapeHtml(nickname)}</span>
+        <span class="text-xs text-inkblack/40 ml-2">${escapeHtml(email)}</span>
+      </div>
+      <div class="text-gold text-sm">${stars}</div>
+    </div>
+    <div class="text-xs text-inkblack/30 mb-2">
+      <span class="inline-block bg-mist px-2 py-0.5">🍽 ${cuisineLabel}</span>
+    </div>
+    <p class="text-inkblack/70 text-sm leading-relaxed">${escapeHtml(content)}</p>
+    <div class="text-xs text-inkblack/30 mt-2">${date}</div>`;
+
+        return card;
+      }
+
+      // 页面加载时恢复留言
+      loadMessages();
+
       function submitForm() {
         let valid = true;
         const nickname = document.getElementById("nickname").value.trim();
@@ -2960,24 +3048,22 @@
         if (!valid) return;
 
         const cuisine = document.getElementById("cuisine").value || "美食";
-        const stars =
-          currentRating > 0
-            ? "★".repeat(currentRating) + "☆".repeat(5 - currentRating)
-            : "★★★★★";
         const today = new Date().toLocaleDateString("zh-CN");
 
-        const card = document.createElement("div");
-        card.className = "msg-card bg-white border border-vermilion p-5";
-        card.innerHTML = `
-    <div class="flex justify-between items-start mb-2">
-      <div><span class="font-medium text-sm">${escapeHtml(nickname)}</span><span class="text-xs text-inkblack/30 ml-2">${escapeHtml(cuisine)}爱好者</span></div>
-      <div class="text-gold text-sm">${stars}</div>
-    </div>
-    <p class="text-inkblack/70 text-sm leading-relaxed">${escapeHtml(content)}</p>
-    <div class="text-xs text-inkblack/30 mt-2">${today}</div>`;
+        const card = createMessageCard(
+          nickname,
+          email,
+          cuisine,
+          currentRating,
+          content,
+          today,
+        );
 
         const list = document.getElementById("messagesList");
         list.insertBefore(card, list.firstChild);
+
+        // 持久化保存
+        saveMessages();
 
         // 重置
         ["nickname", "email", "content"].forEach(
