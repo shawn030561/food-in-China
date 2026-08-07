@@ -1,0 +1,3083 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>食在中国 — 地方美食文化展示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              vermilion: "#C0392B",
+              gold: "#D4A843",
+              inkblack: "#1A1A1A",
+              cream: "#FDF8F0",
+              mist: "#F5F0E8",
+            },
+            fontFamily: {
+              serif: ['"Noto Serif SC"', "serif"],
+              sans: ['"Noto Sans SC"', "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        font-family: "Noto Sans SC", sans-serif;
+        background: #fdf8f0;
+        color: #1a1a1a;
+      }
+      .hero-bg {
+        background: linear-gradient(
+          135deg,
+          #1a0800 0%,
+          #3d1a0a 40%,
+          #1a0800 100%
+        );
+      }
+      .pattern-bg {
+        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C0392B' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      }
+
+      /* 导航 */
+      .nav-link {
+        color: rgba(253, 248, 240, 0.8);
+        font-size: 0.875rem;
+        letter-spacing: 0.1em;
+        transition: color 0.2s;
+        cursor: pointer;
+      }
+      .nav-link:hover,
+      .nav-link.active {
+        color: #d4a843;
+      }
+      .nav-link.active {
+        border-bottom: 1px solid #d4a843;
+      }
+
+      /* 页面切换 */
+      .page {
+        display: none;
+      }
+      .page.active {
+        display: block;
+        animation: fadeIn 0.4s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* 轮播 */
+      .carousel-item {
+        display: none;
+      }
+      .carousel-item.active {
+        display: block;
+        animation: fadeIn 0.5s ease;
+      }
+
+      /* 卡片悬停 */
+      .card-hover {
+        transition: all 0.3s;
+      }
+      .card-hover:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+      }
+
+      /* 按钮 */
+      .btn-primary {
+        background: #c0392b;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        font-size: 0.875rem;
+        letter-spacing: 0.1em;
+        transition: background 0.2s;
+        cursor: pointer;
+        border: none;
+        display: inline-block;
+      }
+      .btn-primary:hover {
+        background: #a93226;
+      }
+
+      /* 筛选按钮 */
+      .filter-btn {
+        padding: 0.4rem 1.2rem;
+        font-size: 0.75rem;
+        letter-spacing: 0.12em;
+        border: 1px solid #d1d5db;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: "Noto Sans SC", sans-serif;
+        background: white;
+      }
+      .filter-btn.active,
+      .filter-btn:hover {
+        background: #c0392b;
+        color: white;
+        border-color: #c0392b;
+      }
+
+      /* 表单 */
+      .form-input {
+        width: 100%;
+        padding: 0.625rem 1rem;
+        border: 1px solid #e5e7eb;
+        background: white;
+        font-family: "Noto Sans SC", sans-serif;
+        font-size: 0.875rem;
+        transition: border-color 0.2s;
+        outline: none;
+        box-sizing: border-box;
+      }
+      .form-input:focus {
+        border-color: #c0392b;
+      }
+      .form-input.error {
+        border-color: #ef4444;
+      }
+      .error-msg {
+        color: #ef4444;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        display: none;
+      }
+      .error-msg.show {
+        display: block;
+      }
+      .char-counter {
+        font-size: 0.75rem;
+        color: #9ca3af;
+        text-align: right;
+      }
+      .char-counter.warn {
+        color: #f59e0b;
+      }
+      .char-counter.over {
+        color: #ef4444;
+      }
+      .rating-star {
+        cursor: pointer;
+        font-size: 1.5rem;
+        transition: transform 0.1s;
+      }
+      .rating-star:hover {
+        transform: scale(1.2);
+      }
+
+      /* 弹窗 */
+      .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 200;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+      }
+      .modal.open {
+        display: flex;
+      }
+      .modal-content {
+        background: #fdf8f0;
+        max-width: 600px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      .step-num {
+        background: #c0392b;
+        color: white;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+      }
+
+      /* 时间轴 */
+      .timeline-item {
+        position: relative;
+        padding-left: 2.5rem;
+      }
+      .timeline-item::before {
+        content: "";
+        position: absolute;
+        left: 0.625rem;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: #e5e7eb;
+      }
+      .timeline-dot {
+        position: absolute;
+        left: 0;
+        top: 0.375rem;
+        width: 1.25rem;
+        height: 1.25rem;
+        background: #c0392b;
+        border-radius: 50%;
+        border: 2px solid #fdf8f0;
+        box-shadow: 0 0 0 2px #c0392b;
+      }
+
+      /* 留言卡片动画 */
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .msg-card {
+        animation: slideIn 0.4s ease;
+      }
+
+      /* 菜谱卡片 */
+      .recipe-card {
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      .recipe-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+      }
+
+      /* 美食图片背景卡片通用样式 */
+      .food-card-bg {
+        position: relative;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        overflow: hidden;
+      }
+      /* 深色渐变遮罩，保证文字看清 */
+      .food-card-bg::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to top,
+          rgba(0, 0, 0, 0.75) 0%,
+          rgba(0, 0, 0, 0.1) 60%,
+          transparent 100%
+        );
+        z-index: 1;
+      }
+      /* 卡片内部文字内容提升层级，浮在遮罩上方 */
+      .food-card-content {
+        position: relative;
+        z-index: 2;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ===== 顶部导航（所有页面共用） ===== -->
+    <nav class="hero-bg sticky top-0 z-50 shadow-lg">
+      <div class="max-w-6xl mx-auto px-4 md:px-6">
+        <div class="flex items-center justify-between h-16">
+          <span
+            onclick="showPage('home')"
+            class="font-serif text-gold text-xl tracking-widest cursor-pointer"
+            >食在中国</span
+          >
+          <div class="hidden md:flex items-center gap-8">
+            <span onclick="showPage('home')" class="nav-link" id="nav-home"
+              >首页</span
+            >
+            <span
+              onclick="showPage('regions')"
+              class="nav-link"
+              id="nav-regions"
+              >地区美食</span
+            >
+            <span
+              onclick="showPage('recipes')"
+              class="nav-link"
+              id="nav-recipes"
+              >经典菜谱</span
+            >
+            <span
+              onclick="showPage('culture')"
+              class="nav-link"
+              id="nav-culture"
+              >饮食文化</span
+            >
+            <span
+              onclick="showPage('message')"
+              class="nav-link"
+              id="nav-message"
+              >留言互动</span
+            >
+          </div>
+          <button id="menuBtn" class="md:hidden text-cream focus:outline-none">
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+          </button>
+        </div>
+        <div id="mobileMenu" class="hidden pb-4 flex-col gap-2">
+          <span
+            onclick="
+              showPage('home');
+              closeMobile();
+            "
+            class="nav-link block py-1"
+            >首页</span
+          >
+          <span
+            onclick="
+              showPage('regions');
+              closeMobile();
+            "
+            class="nav-link block py-1"
+            >地区美食</span
+          >
+          <span
+            onclick="
+              showPage('recipes');
+              closeMobile();
+            "
+            class="nav-link block py-1"
+            >经典菜谱</span
+          >
+          <span
+            onclick="
+              showPage('culture');
+              closeMobile();
+            "
+            class="nav-link block py-1"
+            >饮食文化</span
+          >
+          <span
+            onclick="
+              showPage('message');
+              closeMobile();
+            "
+            class="nav-link block py-1"
+            >留言互动</span
+          >
+        </div>
+      </div>
+    </nav>
+
+    <!-- ========================================
+     页面1：首页
+     ======================================== -->
+    <div id="page-home" class="page active">
+      <!-- Hero -->
+      <section class="hero-bg text-white relative overflow-hidden">
+        <div class="absolute inset-0 pattern-bg opacity-40"></div>
+        <div class="relative max-w-6xl mx-auto px-4 md:px-6 py-20 md:py-32">
+          <div class="max-w-2xl">
+            <p
+              class="text-gold font-sans text-xs tracking-[0.3em] uppercase mb-4"
+            >
+              中华饮食文化
+            </p>
+            <h1
+              class="font-serif text-5xl md:text-7xl font-bold leading-tight mb-6"
+            >
+              食在<br /><span class="text-gold">中国</span>
+            </h1>
+            <p
+              class="text-cream/70 text-base md:text-lg leading-relaxed mb-10 font-light"
+            >
+              八大菜系，百年传承。<br />跟随我们的足迹，探索中国各地的饮食文化与烹饪艺术。
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4">
+              <button
+                onclick="showPage('regions')"
+                class="btn-primary text-center"
+              >
+                探索地区美食
+              </button>
+              <button
+                onclick="showPage('culture')"
+                class="border border-gold text-gold px-6 py-3 text-sm tracking-widest hover:bg-gold hover:text-inkblack transition-all duration-200"
+              >
+                了解饮食文化
+              </button>
+            </div>
+          </div>
+        </div>
+        <div
+          class="absolute right-0 top-0 h-full w-1/3 hidden lg:flex items-center justify-center opacity-20"
+        >
+          <span
+            class="font-serif text-[200px] font-bold text-gold leading-none select-none"
+            >食</span
+          >
+        </div>
+      </section>
+
+      <!-- 轮播 -->
+      <section class="bg-white py-14 md:py-20">
+        <div class="max-w-6xl mx-auto px-4 md:px-6">
+          <div class="text-center mb-10">
+            <p class="text-vermilion text-xs tracking-[0.3em] uppercase mb-2">
+              精选推荐
+            </p>
+            <h2 class="font-serif text-3xl md:text-4xl font-bold">
+              本周精选美食
+            </h2>
+          </div>
+          <div
+            class="relative overflow-hidden rounded-lg shadow-2xl"
+            id="carousel"
+          >
+            <div class="carousel-item active">
+              <div
+                class="bg-gradient-to-br from-red-900 to-red-700 h-72 md:h-96 flex items-end"
+              >
+                <div class="p-8 md:p-12 text-white">
+                  <span
+                    class="bg-gold text-inkblack text-xs px-3 py-1 tracking-widest mb-3 inline-block"
+                    >川菜</span
+                  >
+                  <h3 class="font-serif text-3xl md:text-4xl font-bold mb-2">
+                    麻婆豆腐
+                  </h3>
+                  <p class="text-white/70 text-sm md:text-base font-light">
+                    豆腐软嫩，麻辣鲜香，是四川家庭餐桌上的经典之作。以豆瓣酱、花椒为魂，回味无穷。
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="carousel-item">
+              <div
+                class="bg-gradient-to-br from-amber-900 to-amber-700 h-72 md:h-96 flex items-end"
+              >
+                <div class="p-8 md:p-12 text-white">
+                  <span
+                    class="bg-gold text-inkblack text-xs px-3 py-1 tracking-widest mb-3 inline-block"
+                    >粤菜</span
+                  >
+                  <h3 class="font-serif text-3xl md:text-4xl font-bold mb-2">
+                    白切鸡
+                  </h3>
+                  <p class="text-white/70 text-sm md:text-base font-light">
+                    皮脆肉嫩，原汁原味，蘸以姜蓉葱油，尽显粤菜清淡鲜美的精髓所在。
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="carousel-item">
+              <div
+                class="bg-gradient-to-br from-stone-800 to-stone-600 h-72 md:h-96 flex items-end"
+              >
+                <div class="p-8 md:p-12 text-white">
+                  <span
+                    class="bg-gold text-inkblack text-xs px-3 py-1 tracking-widest mb-3 inline-block"
+                    >苏菜</span
+                  >
+                  <h3 class="font-serif text-3xl md:text-4xl font-bold mb-2">
+                    松鼠桂鱼
+                  </h3>
+                  <p class="text-white/70 text-sm md:text-base font-light">
+                    刀工精湛，形如松鼠，外酥里嫩，酸甜适口，是江苏菜肴中的艺术珍品。
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="carousel-item">
+              <div
+                class="bg-gradient-to-br from-green-900 to-green-700 h-72 md:h-96 flex items-end"
+              >
+                <div class="p-8 md:p-12 text-white">
+                  <span
+                    class="bg-gold text-inkblack text-xs px-3 py-1 tracking-widest mb-3 inline-block"
+                    >湘菜</span
+                  >
+                  <h3 class="font-serif text-3xl md:text-4xl font-bold mb-2">
+                    剁椒鱼头
+                  </h3>
+                  <p class="text-white/70 text-sm md:text-base font-light">
+                    鲜辣酸香，湘菜代表。剁椒的火红热烈，鱼头的鲜嫩，成就了这道豪放之作。
+                  </p>
+                </div>
+              </div>
+            </div>
+            <button
+              onclick="changeSlide(-1)"
+              class="absolute left-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+            >
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
+            <button
+              onclick="changeSlide(1)"
+              class="absolute right-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+            >
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+            <div
+              class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2"
+              id="dots"
+            >
+              <button
+                onclick="goToSlide(0)"
+                class="dot w-2.5 h-2.5 rounded-full bg-white"
+              ></button>
+              <button
+                onclick="goToSlide(1)"
+                class="dot w-2.5 h-2.5 rounded-full bg-white/50"
+              ></button>
+              <button
+                onclick="goToSlide(2)"
+                class="dot w-2.5 h-2.5 rounded-full bg-white/50"
+              ></button>
+              <button
+                onclick="goToSlide(3)"
+                class="dot w-2.5 h-2.5 rounded-full bg-white/50"
+              ></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 八大菜系 -->
+      <section class="bg-mist pattern-bg py-14 md:py-20">
+        <div class="max-w-6xl mx-auto px-4 md:px-6">
+          <div class="text-center mb-12">
+            <p class="text-vermilion text-xs tracking-[0.3em] uppercase mb-2">
+              按地区探索
+            </p>
+            <h2 class="font-serif text-3xl md:text-4xl font-bold">八大菜系</h2>
+            <p class="text-inkblack/50 mt-3 text-sm">
+              每一种菜系都承载着一方水土的独特记忆
+            </p>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            <div
+              onclick="showPage('regions')"
+              class="card-hover bg-white p-6 text-center border border-stone-200 group cursor-pointer"
+            >
+              <div class="text-4xl mb-3">🌶️</div>
+              <h3
+                class="font-serif text-lg font-bold group-hover:text-vermilion transition-colors"
+              >
+                川菜
+              </h3>
+              <p class="text-inkblack/50 text-xs mt-1">麻辣鲜香</p>
+            </div>
+            <div
+              onclick="showPage('regions')"
+              class="card-hover bg-white p-6 text-center border border-stone-200 group cursor-pointer"
+            >
+              <div class="text-4xl mb-3">🍵</div>
+              <h3
+                class="font-serif text-lg font-bold group-hover:text-vermilion transition-colors"
+              >
+                粤菜
+              </h3>
+              <p class="text-inkblack/50 text-xs mt-1">清淡鲜美</p>
+            </div>
+            <div
+              onclick="showPage('regions')"
+              class="card-hover bg-white p-6 text-center border border-stone-200 group cursor-pointer"
+            >
+              <div class="text-4xl mb-3">🐟</div>
+              <h3
+                class="font-serif text-lg font-bold group-hover:text-vermilion transition-colors"
+              >
+                苏菜
+              </h3>
+              <p class="text-inkblack/50 text-xs mt-1">精细雅致</p>
+            </div>
+            <div
+              onclick="showPage('regions')"
+              class="card-hover bg-white p-6 text-center border border-stone-200 group cursor-pointer"
+            >
+              <div class="text-4xl mb-3">🍖</div>
+              <h3
+                class="font-serif text-lg font-bold group-hover:text-vermilion transition-colors"
+              >
+                湘菜
+              </h3>
+              <p class="text-inkblack/50 text-xs mt-1">辣鲜酸香</p>
+            </div>
+            <div
+              onclick="showPage('regions')"
+              class="card-hover bg-white p-6 text-center border border-stone-200 group cursor-pointer"
+            >
+              <div class="text-4xl mb-3">🦐</div>
+              <h3
+                class="font-serif text-lg font-bold group-hover:text-vermilion transition-colors"
+              >
+                鲁菜
+              </h3>
+              <p class="text-inkblack/50 text-xs mt-1">咸鲜醇厚</p>
+            </div>
+            <div
+              onclick="showPage('regions')"
+              class="card-hover bg-white p-6 text-center border border-stone-200 group cursor-pointer"
+            >
+              <div class="text-4xl mb-3">🍃</div>
+              <h3
+                class="font-serif text-lg font-bold group-hover:text-vermilion transition-colors"
+              >
+                浙菜
+              </h3>
+              <p class="text-inkblack/50 text-xs mt-1">鲜嫩软滑</p>
+            </div>
+            <div
+              onclick="showPage('regions')"
+              class="card-hover bg-white p-6 text-center border border-stone-200 group cursor-pointer"
+            >
+              <div class="text-4xl mb-3">🍲</div>
+              <h3
+                class="font-serif text-lg font-bold group-hover:text-vermilion transition-colors"
+              >
+                闽菜
+              </h3>
+              <p class="text-inkblack/50 text-xs mt-1">汤鲜味美</p>
+            </div>
+            <div
+              onclick="showPage('regions')"
+              class="card-hover bg-white p-6 text-center border border-stone-200 group cursor-pointer"
+            >
+              <div class="text-4xl mb-3">🌿</div>
+              <h3
+                class="font-serif text-lg font-bold group-hover:text-vermilion transition-colors"
+              >
+                徽菜
+              </h3>
+              <p class="text-inkblack/50 text-xs mt-1">重油重色</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 数据统计 -->
+      <section class="bg-vermilion text-white py-12">
+        <div class="max-w-6xl mx-auto px-4 md:px-6">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            <div>
+              <div class="font-serif text-4xl font-bold text-gold">8</div>
+              <div class="text-white/70 text-sm mt-1 tracking-wider">
+                大菜系
+              </div>
+            </div>
+            <div>
+              <div class="font-serif text-4xl font-bold text-gold">34</div>
+              <div class="text-white/70 text-sm mt-1 tracking-wider">
+                个省市地区
+              </div>
+            </div>
+            <div>
+              <div class="font-serif text-4xl font-bold text-gold">500+</div>
+              <div class="text-white/70 text-sm mt-1 tracking-wider">
+                道特色菜肴
+              </div>
+            </div>
+            <div>
+              <div class="font-serif text-4xl font-bold text-gold">5000</div>
+              <div class="text-white/70 text-sm mt-1 tracking-wider">
+                年饮食历史
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 精选菜肴 -->
+      <section class="bg-white py-14 md:py-20">
+        <div class="max-w-6xl mx-auto px-4 md:px-6">
+          <div
+            class="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4"
+          >
+            <div>
+              <p class="text-vermilion text-xs tracking-[0.3em] uppercase mb-2">
+                不可错过
+              </p>
+              <h2 class="font-serif text-3xl md:text-4xl font-bold">
+                经典必尝菜肴
+              </h2>
+            </div>
+            <button
+              onclick="showPage('recipes')"
+              class="text-vermilion text-sm tracking-widest hover:text-red-800"
+            >
+              查看全部菜谱 →
+            </button>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <article
+              class="card-hover border border-stone-100 overflow-hidden group"
+            >
+              <div
+                class="bg-gradient-to-br from-orange-100 to-red-100 h-48 flex items-center justify-center"
+              >
+                <span class="text-7xl">🦆</span>
+              </div>
+              <div class="p-6">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-xs text-vermilion tracking-widest"
+                    >北京</span
+                  ><span class="text-xs text-inkblack/40">经典传统</span>
+                </div>
+                <h3
+                  class="font-serif text-xl font-bold mb-2 group-hover:text-vermilion transition-colors"
+                >
+                  北京烤鸭
+                </h3>
+                <p class="text-inkblack/60 text-sm leading-relaxed">
+                  选用优质北京鸭，经百年秘制工艺烤制，皮脆肉嫩，配荷叶饼、葱段、甜面酱食用，是中华美食的代表之作。
+                </p>
+                <button
+                  onclick="showPage('recipes')"
+                  class="mt-4 inline-block text-xs text-vermilion tracking-widest hover:underline"
+                >
+                  查看菜谱 →
+                </button>
+              </div>
+            </article>
+            <article
+              class="card-hover border border-stone-100 overflow-hidden group"
+            >
+              <div
+                class="bg-gradient-to-br from-green-100 to-teal-100 h-48 flex items-center justify-center"
+              >
+                <span class="text-7xl">🦀</span>
+              </div>
+              <div class="p-6">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-xs text-vermilion tracking-widest"
+                    >上海</span
+                  ><span class="text-xs text-inkblack/40">节令美食</span>
+                </div>
+                <h3
+                  class="font-serif text-xl font-bold mb-2 group-hover:text-vermilion transition-colors"
+                >
+                  清蒸大闸蟹
+                </h3>
+                <p class="text-inkblack/60 text-sm leading-relaxed">
+                  阳澄湖大闸蟹，秋日必尝的饕餮盛宴。蟹黄饱满，蟹肉鲜甜，配以姜末醋，蘸食最佳。
+                </p>
+                <button
+                  onclick="showPage('recipes')"
+                  class="mt-4 inline-block text-xs text-vermilion tracking-widest hover:underline"
+                >
+                  查看菜谱 →
+                </button>
+              </div>
+            </article>
+            <article
+              class="card-hover border border-stone-100 overflow-hidden group"
+            >
+              <div
+                class="bg-gradient-to-br from-yellow-100 to-amber-100 h-48 flex items-center justify-center"
+              >
+                <span class="text-7xl">🥟</span>
+              </div>
+              <div class="p-6">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-xs text-vermilion tracking-widest"
+                    >广州</span
+                  ><span class="text-xs text-inkblack/40">早茶文化</span>
+                </div>
+                <h3
+                  class="font-serif text-xl font-bold mb-2 group-hover:text-vermilion transition-colors"
+                >
+                  广式早茶点心
+                </h3>
+                <p class="text-inkblack/60 text-sm leading-relaxed">
+                  虾饺、烧麦、叉烧包……广式早茶不仅是一顿早餐，更是一种生活仪式，承载着南粤饮食文化的精华。
+                </p>
+                <button
+                  onclick="showPage('recipes')"
+                  class="mt-4 inline-block text-xs text-vermilion tracking-widest hover:underline"
+                >
+                  查看菜谱 →
+                </button>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- CTA -->
+      <section class="hero-bg pattern-bg py-14 text-center">
+        <div class="max-w-xl mx-auto px-4">
+          <h2 class="font-serif text-3xl font-bold text-gold mb-4">
+            分享你的美食故事
+          </h2>
+          <p class="text-cream/70 font-light mb-8 text-sm leading-relaxed">
+            每道美食背后都有一段故事。欢迎在留言板中分享你与中国美食的难忘记忆，与全国食客共鸣。
+          </p>
+          <button onclick="showPage('message')" class="btn-primary">
+            前往留言互动
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- ========================================
+     页面2：地区美食
+     ======================================== -->
+    <div id="page-regions" class="page">
+      <!-- ====== 菜系列表 ====== -->
+      <div id="regions-list-view">
+        <section class="hero-bg text-white py-16">
+          <div class="max-w-6xl mx-auto px-4 md:px-6">
+            <p class="text-gold text-xs tracking-[0.3em] uppercase mb-3">
+              REGIONAL CUISINE
+            </p>
+            <h1 class="font-serif text-4xl md:text-5xl font-bold mb-4">
+              地区美食
+            </h1>
+            <p class="text-cream/70 font-light max-w-lg">
+              中国地大物博，各地物产与气候造就了截然不同的饮食风格。点击菜系卡片，深入探索各地美食与食谱。
+            </p>
+          </div>
+        </section>
+
+        <!-- 筛选栏 -->
+        <section class="bg-white border-b border-stone-100 py-6">
+          <div class="max-w-6xl mx-auto px-4 md:px-6">
+            <div class="flex flex-wrap gap-3">
+              <button
+                class="filter-btn active"
+                onclick="filterRegion('all', this)"
+              >
+                全部
+              </button>
+              <button class="filter-btn" onclick="filterRegion('spicy', this)">
+                辣味系
+              </button>
+              <button class="filter-btn" onclick="filterRegion('fresh', this)">
+                清淡系
+              </button>
+              <button class="filter-btn" onclick="filterRegion('sweet', this)">
+                甜鲜系
+              </button>
+              <button class="filter-btn" onclick="filterRegion('savory', this)">
+                咸鲜系
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 菜系网格 -->
+        <section class="py-14 md:py-20 bg-mist">
+          <div class="max-w-6xl mx-auto px-4 md:px-6">
+            <div
+              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+              id="regionsGrid"
+            >
+              <!-- 川菜 -->
+              <div
+                class="region-card cursor-pointer group overflow-hidden bg-white border border-stone-100 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                data-type="spicy"
+                onclick="showCuisineDetail('sichuan')"
+              >
+                <div class="relative h-48 overflow-hidden">
+                  <img
+                    src="./images/ChuanCai.png"
+                    alt="川菜"
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div
+                    class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"
+                  ></div>
+                  <div class="absolute bottom-0 left-0 p-4 text-white">
+                    <div class="text-xs tracking-widest text-red-300 mb-1">
+                      SICHUAN
+                    </div>
+                    <h2 class="font-serif text-2xl font-bold">川菜</h2>
+                    <p class="text-white/70 text-xs mt-0.5">四川 · 重庆</p>
+                  </div>
+                  <div
+                    class="absolute top-3 right-3 bg-red-600 text-white text-xs px-2 py-0.5 tracking-wider"
+                  >
+                    辣味系
+                  </div>
+                </div>
+                <div class="p-5">
+                  <p
+                    class="text-inkblack/60 text-sm leading-relaxed line-clamp-2"
+                  >
+                    以麻、辣、鲜、香著称，善用辣椒、花椒、豆瓣酱，"食在中国，味在四川"。
+                  </p>
+                  <div class="flex flex-wrap gap-1.5 mt-3">
+                    <span class="bg-red-50 text-red-700 text-xs px-2 py-0.5"
+                      >麻婆豆腐</span
+                    >
+                    <span class="bg-red-50 text-red-700 text-xs px-2 py-0.5"
+                      >宫保鸡丁</span
+                    >
+                    <span class="bg-red-50 text-red-700 text-xs px-2 py-0.5"
+                      >水煮鱼</span
+                    >
+                  </div>
+                  <div
+                    class="mt-4 flex items-center text-vermilion text-xs tracking-widest"
+                  >
+                    查看详情与食谱 <span class="ml-1">→</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 粤菜 -->
+              <div
+                class="region-card cursor-pointer group overflow-hidden bg-white border border-stone-100 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                data-type="fresh"
+                onclick="showCuisineDetail('cantonese')"
+              >
+                <div class="relative h-48 overflow-hidden">
+                  <img
+                    src="./images/YueCai.png"
+                    alt="粤菜"
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div
+                    class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"
+                  ></div>
+                  <div class="absolute bottom-0 left-0 p-4 text-white">
+                    <div class="text-xs tracking-widest text-amber-300 mb-1">
+                      CANTONESE
+                    </div>
+                    <h2 class="font-serif text-2xl font-bold">粤菜</h2>
+                    <p class="text-white/70 text-xs mt-0.5">
+                      广东 · 香港 · 澳门
+                    </p>
+                  </div>
+                  <div
+                    class="absolute top-3 right-3 bg-amber-600 text-white text-xs px-2 py-0.5 tracking-wider"
+                  >
+                    清淡系
+                  </div>
+                </div>
+                <div class="p-5">
+                  <p
+                    class="text-inkblack/60 text-sm leading-relaxed line-clamp-2"
+                  >
+                    以清淡鲜美著称，讲究原汁原味。广式早茶文化举世闻名，顺德更获"世界美食之都"。
+                  </p>
+                  <div class="flex flex-wrap gap-1.5 mt-3">
+                    <span class="bg-amber-50 text-amber-700 text-xs px-2 py-0.5"
+                      >白切鸡</span
+                    >
+                    <span class="bg-amber-50 text-amber-700 text-xs px-2 py-0.5"
+                      >虾饺</span
+                    >
+                    <span class="bg-amber-50 text-amber-700 text-xs px-2 py-0.5"
+                      >双皮奶</span
+                    >
+                  </div>
+                  <div
+                    class="mt-4 flex items-center text-vermilion text-xs tracking-widest"
+                  >
+                    查看详情与食谱 <span class="ml-1">→</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 苏菜 -->
+              <div
+                class="region-card cursor-pointer group overflow-hidden bg-white border border-stone-100 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                data-type="sweet"
+                onclick="showCuisineDetail('jiangsu')"
+              >
+                <div class="relative h-48 overflow-hidden">
+                  <img
+                    src="./images/SuCai.png"
+                    alt="苏菜"
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div
+                    class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"
+                  ></div>
+                  <div class="absolute bottom-0 left-0 p-4 text-white">
+                    <div class="text-xs tracking-widest text-teal-300 mb-1">
+                      JIANGSU
+                    </div>
+                    <h2 class="font-serif text-2xl font-bold">苏菜</h2>
+                    <p class="text-white/70 text-xs mt-0.5">
+                      江苏 · 南京 · 苏州
+                    </p>
+                  </div>
+                  <div
+                    class="absolute top-3 right-3 bg-teal-700 text-white text-xs px-2 py-0.5 tracking-wider"
+                  >
+                    甜鲜系
+                  </div>
+                </div>
+                <div class="p-5">
+                  <p
+                    class="text-inkblack/60 text-sm leading-relaxed line-clamp-2"
+                  >
+                    宫廷菜重要来源，刀工精细典雅，口味清淡偏甜，淮扬菜被誉为"东方美食"代表。
+                  </p>
+                  <div class="flex flex-wrap gap-1.5 mt-3">
+                    <span class="bg-teal-50 text-teal-700 text-xs px-2 py-0.5"
+                      >松鼠桂鱼</span
+                    >
+                    <span class="bg-teal-50 text-teal-700 text-xs px-2 py-0.5"
+                      >狮子头</span
+                    >
+                    <span class="bg-teal-50 text-teal-700 text-xs px-2 py-0.5"
+                      >叫花鸡</span
+                    >
+                  </div>
+                  <div
+                    class="mt-4 flex items-center text-vermilion text-xs tracking-widest"
+                  >
+                    查看详情与食谱 <span class="ml-1">→</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 湘菜 -->
+              <div
+                class="region-card cursor-pointer group overflow-hidden bg-white border border-stone-100 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                data-type="spicy"
+                onclick="showCuisineDetail('hunan')"
+              >
+                <div class="relative h-48 overflow-hidden">
+                  <img
+                    src="./images/XiangCai.png"
+                    alt="湘菜"
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div
+                    class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"
+                  ></div>
+                  <div class="absolute bottom-0 left-0 p-4 text-white">
+                    <div class="text-xs tracking-widest text-orange-300 mb-1">
+                      HUNAN
+                    </div>
+                    <h2 class="font-serif text-2xl font-bold">湘菜</h2>
+                    <p class="text-white/70 text-xs mt-0.5">
+                      湖南 · 长沙 · 湘西
+                    </p>
+                  </div>
+                  <div
+                    class="absolute top-3 right-3 bg-orange-600 text-white text-xs px-2 py-0.5 tracking-wider"
+                  >
+                    辣味系
+                  </div>
+                </div>
+                <div class="p-5">
+                  <p
+                    class="text-inkblack/60 text-sm leading-relaxed line-clamp-2"
+                  >
+                    纯粹的辣，带有酸香，善用剁辣椒与腊肉，"无辣不欢"是湖南饮食的真实写照。
+                  </p>
+                  <div class="flex flex-wrap gap-1.5 mt-3">
+                    <span
+                      class="bg-orange-50 text-orange-700 text-xs px-2 py-0.5"
+                      >剁椒鱼头</span
+                    >
+                    <span
+                      class="bg-orange-50 text-orange-700 text-xs px-2 py-0.5"
+                      >腊肉炒笋</span
+                    >
+                    <span
+                      class="bg-orange-50 text-orange-700 text-xs px-2 py-0.5"
+                      >红烧肉</span
+                    >
+                  </div>
+                  <div
+                    class="mt-4 flex items-center text-vermilion text-xs tracking-widest"
+                  >
+                    查看详情与食谱 <span class="ml-1">→</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 鲁菜 -->
+              <div
+                class="region-card cursor-pointer group overflow-hidden bg-white border border-stone-100 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                data-type="savory"
+                onclick="showCuisineDetail('shandong')"
+              >
+                <div class="relative h-48 overflow-hidden">
+                  <img
+                    src="./images/LuCai.png"
+                    alt="鲁菜"
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div
+                    class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"
+                  ></div>
+                  <div class="absolute bottom-0 left-0 p-4 text-white">
+                    <div class="text-xs tracking-widest text-blue-300 mb-1">
+                      SHANDONG
+                    </div>
+                    <h2 class="font-serif text-2xl font-bold">鲁菜</h2>
+                    <p class="text-white/70 text-xs mt-0.5">
+                      山东 · 济南 · 青岛
+                    </p>
+                  </div>
+                  <div
+                    class="absolute top-3 right-3 bg-blue-700 text-white text-xs px-2 py-0.5 tracking-wider"
+                  >
+                    咸鲜系
+                  </div>
+                </div>
+                <div class="p-5">
+                  <p
+                    class="text-inkblack/60 text-sm leading-relaxed line-clamp-2"
+                  >
+                    八大菜系之首，历史最悠久，咸鲜醇厚，官府菜代表，对其他菜系影响深远。
+                  </p>
+                  <div class="flex flex-wrap gap-1.5 mt-3">
+                    <span class="bg-blue-50 text-blue-700 text-xs px-2 py-0.5"
+                      >葱烧海参</span
+                    >
+                    <span class="bg-blue-50 text-blue-700 text-xs px-2 py-0.5"
+                      >糖醋鲤鱼</span
+                    >
+                    <span class="bg-blue-50 text-blue-700 text-xs px-2 py-0.5"
+                      >九转大肠</span
+                    >
+                  </div>
+                  <div
+                    class="mt-4 flex items-center text-vermilion text-xs tracking-widest"
+                  >
+                    查看详情与食谱 <span class="ml-1">→</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 浙菜 -->
+              <div
+                class="region-card cursor-pointer group overflow-hidden bg-white border border-stone-100 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                data-type="fresh"
+                onclick="showCuisineDetail('zhejiang')"
+              >
+                <div class="relative h-48 overflow-hidden">
+                  <img
+                    src="./images/ZheCai.png"
+                    alt="浙菜"
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div
+                    class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"
+                  ></div>
+                  <div class="absolute bottom-0 left-0 p-4 text-white">
+                    <div class="text-xs tracking-widest text-green-300 mb-1">
+                      ZHEJIANG
+                    </div>
+                    <h2 class="font-serif text-2xl font-bold">浙菜</h2>
+                    <p class="text-white/70 text-xs mt-0.5">
+                      浙江 · 杭州 · 宁波
+                    </p>
+                  </div>
+                  <div
+                    class="absolute top-3 right-3 bg-green-700 text-white text-xs px-2 py-0.5 tracking-wider"
+                  >
+                    清淡系
+                  </div>
+                </div>
+                <div class="p-5">
+                  <p
+                    class="text-inkblack/60 text-sm leading-relaxed line-clamp-2"
+                  >
+                    清鲜嫩滑，善用龙井茶、西湖食材，讲究色香味形俱全，"江南饮食文化"代表。
+                  </p>
+                  <div class="flex flex-wrap gap-1.5 mt-3">
+                    <span class="bg-green-50 text-green-700 text-xs px-2 py-0.5"
+                      >西湖醋鱼</span
+                    >
+                    <span class="bg-green-50 text-green-700 text-xs px-2 py-0.5"
+                      >东坡肉</span
+                    >
+                    <span class="bg-green-50 text-green-700 text-xs px-2 py-0.5"
+                      >龙井虾仁</span
+                    >
+                  </div>
+                  <div
+                    class="mt-4 flex items-center text-vermilion text-xs tracking-widest"
+                  >
+                    查看详情与食谱 <span class="ml-1">→</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+      <!-- /regions-list-view -->
+
+      <!-- ====== 菜系详情视图（动态渲染） ====== -->
+      <div id="cuisine-detail-view" class="hidden">
+        <div id="cuisine-detail-content"></div>
+      </div>
+    </div>
+    <!-- /page-regions -->
+
+    <!-- ========================================
+     页面3：经典菜谱
+     ======================================== -->
+    <div id="page-recipes" class="page">
+      <section class="hero-bg text-white py-16">
+        <div class="max-w-6xl mx-auto px-4 md:px-6">
+          <p class="text-gold text-xs tracking-[0.3em] uppercase mb-3">
+            CLASSIC RECIPES
+          </p>
+          <h1 class="font-serif text-4xl md:text-5xl font-bold mb-4">
+            经典菜谱
+          </h1>
+          <p class="text-cream/70 font-light max-w-lg">
+            精选中国各地传统名菜，详细步骤让您在家复刻地道中华美味。
+          </p>
+          <div class="mt-6 flex gap-3 max-w-md">
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="搜索菜名、食材..."
+              oninput="searchRecipes()"
+              class="flex-1 px-4 py-2 bg-white/10 border border-white/30 text-white placeholder-white/50 text-sm focus:outline-none focus:border-gold"
+            />
+            <button
+              class="bg-gold text-inkblack px-4 py-2 text-sm tracking-widest hover:bg-yellow-500 transition-colors"
+            >
+              搜索
+            </button>
+          </div>
+        </div>
+      </section>
+      <section class="py-14 md:py-20">
+        <div class="max-w-6xl mx-auto px-4 md:px-6">
+          <div
+            id="recipesGrid"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            <div
+              class="recipe-card bg-white border border-stone-100 overflow-hidden"
+              onclick="openModal('mapo')"
+            >
+              <div
+                class="bg-gradient-to-br from-red-800 to-red-600 h-44 flex items-center justify-center"
+              >
+                <span class="text-6xl">🫕</span>
+              </div>
+              <div class="p-5">
+                <div class="flex justify-between items-center mb-2">
+                  <span class="text-xs text-vermilion tracking-widest"
+                    >川菜</span
+                  ><span class="text-xs bg-red-50 text-red-600 px-2 py-0.5"
+                    >中等难度</span
+                  >
+                </div>
+                <h3 class="font-serif text-lg font-bold mb-1">麻婆豆腐</h3>
+                <p class="text-inkblack/50 text-xs leading-relaxed">
+                  经典川菜，麻辣鲜香，豆腐嫩滑
+                </p>
+                <div class="flex gap-4 mt-3 text-xs text-inkblack/40">
+                  <span>⏱ 30分钟</span><span>👥 2-3人份</span>
+                </div>
+              </div>
+            </div>
+            <div
+              class="recipe-card bg-white border border-stone-100 overflow-hidden"
+              onclick="openModal('duck')"
+            >
+              <div
+                class="bg-gradient-to-br from-amber-800 to-amber-600 h-44 flex items-center justify-center"
+              >
+                <span class="text-6xl">🦆</span>
+              </div>
+              <div class="p-5">
+                <div class="flex justify-between items-center mb-2">
+                  <span class="text-xs text-vermilion tracking-widest"
+                    >北京</span
+                  ><span
+                    class="text-xs bg-orange-50 text-orange-600 px-2 py-0.5"
+                    >较难</span
+                  >
+                </div>
+                <h3 class="font-serif text-lg font-bold mb-1">北京烤鸭</h3>
+                <p class="text-inkblack/50 text-xs leading-relaxed">
+                  皮脆肉嫩，百年传统工艺
+                </p>
+                <div class="flex gap-4 mt-3 text-xs text-inkblack/40">
+                  <span>⏱ 3小时</span><span>👥 4-6人份</span>
+                </div>
+              </div>
+            </div>
+            <div
+              class="recipe-card bg-white border border-stone-100 overflow-hidden"
+              onclick="openModal('fish')"
+            >
+              <div
+                class="bg-gradient-to-br from-teal-800 to-teal-600 h-44 flex items-center justify-center"
+              >
+                <span class="text-6xl">🐟</span>
+              </div>
+              <div class="p-5">
+                <div class="flex justify-between items-center mb-2">
+                  <span class="text-xs text-vermilion tracking-widest"
+                    >浙菜</span
+                  ><span class="text-xs bg-green-50 text-green-600 px-2 py-0.5"
+                    >较易</span
+                  >
+                </div>
+                <h3 class="font-serif text-lg font-bold mb-1">西湖醋鱼</h3>
+                <p class="text-inkblack/50 text-xs leading-relaxed">
+                  酸甜可口，鱼肉鲜嫩
+                </p>
+                <div class="flex gap-4 mt-3 text-xs text-inkblack/40">
+                  <span>⏱ 40分钟</span><span>👥 2-3人份</span>
+                </div>
+              </div>
+            </div>
+            <div
+              class="recipe-card bg-white border border-stone-100 overflow-hidden"
+              onclick="openModal('dongpo')"
+            >
+              <div
+                class="bg-gradient-to-br from-stone-700 to-stone-500 h-44 flex items-center justify-center"
+              >
+                <span class="text-6xl">🥩</span>
+              </div>
+              <div class="p-5">
+                <div class="flex justify-between items-center mb-2">
+                  <span class="text-xs text-vermilion tracking-widest"
+                    >浙菜</span
+                  ><span
+                    class="text-xs bg-yellow-50 text-yellow-600 px-2 py-0.5"
+                    >中等难度</span
+                  >
+                </div>
+                <h3 class="font-serif text-lg font-bold mb-1">东坡肉</h3>
+                <p class="text-inkblack/50 text-xs leading-relaxed">
+                  肥而不腻，软糯入味
+                </p>
+                <div class="flex gap-4 mt-3 text-xs text-inkblack/40">
+                  <span>⏱ 2小时</span><span>👥 3-4人份</span>
+                </div>
+              </div>
+            </div>
+            <div
+              class="recipe-card bg-white border border-stone-100 overflow-hidden"
+              onclick="openModal('shrimp')"
+            >
+              <div
+                class="bg-gradient-to-br from-pink-800 to-pink-600 h-44 flex items-center justify-center"
+              >
+                <span class="text-6xl">🍤</span>
+              </div>
+              <div class="p-5">
+                <div class="flex justify-between items-center mb-2">
+                  <span class="text-xs text-vermilion tracking-widest"
+                    >粤菜</span
+                  ><span class="text-xs bg-pink-50 text-pink-600 px-2 py-0.5"
+                    >较易</span
+                  >
+                </div>
+                <h3 class="font-serif text-lg font-bold mb-1">白灼虾</h3>
+                <p class="text-inkblack/50 text-xs leading-relaxed">
+                  鲜甜弹牙，原汁原味
+                </p>
+                <div class="flex gap-4 mt-3 text-xs text-inkblack/40">
+                  <span>⏱ 15分钟</span><span>👥 2-3人份</span>
+                </div>
+              </div>
+            </div>
+            <div
+              class="recipe-card bg-white border border-stone-100 overflow-hidden"
+              onclick="openModal('dumplings')"
+            >
+              <div
+                class="bg-gradient-to-br from-yellow-700 to-yellow-500 h-44 flex items-center justify-center"
+              >
+                <span class="text-6xl">🥟</span>
+              </div>
+              <div class="p-5">
+                <div class="flex justify-between items-center mb-2">
+                  <span class="text-xs text-vermilion tracking-widest"
+                    >北方</span
+                  ><span class="text-xs bg-blue-50 text-blue-600 px-2 py-0.5"
+                    >中等难度</span
+                  >
+                </div>
+                <h3 class="font-serif text-lg font-bold mb-1">猪肉白菜饺子</h3>
+                <p class="text-inkblack/50 text-xs leading-relaxed">
+                  皮薄馅大，年节必备
+                </p>
+                <div class="flex gap-4 mt-3 text-xs text-inkblack/40">
+                  <span>⏱ 90分钟</span><span>👥 4-5人份</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p
+            id="noResults"
+            class="hidden text-center text-inkblack/40 py-12 text-sm"
+          >
+            未找到相关菜谱，请尝试其他关键词
+          </p>
+        </div>
+      </section>
+      <!-- 菜谱弹窗 -->
+      <div class="modal" id="recipeModal" onclick="closeModalOutside(event)">
+        <div class="modal-content" id="modalContent">
+          <div id="modalInner"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================
+     页面4：饮食文化
+     ======================================== -->
+    <div id="page-culture" class="page">
+      <section class="hero-bg text-white py-16">
+        <div class="max-w-6xl mx-auto px-4 md:px-6">
+          <p class="text-gold text-xs tracking-[0.3em] uppercase mb-3">
+            FOOD CULTURE
+          </p>
+          <h1 class="font-serif text-4xl md:text-5xl font-bold mb-4">
+            饮食文化
+          </h1>
+          <p class="text-cream/70 font-light max-w-lg">
+            中国饮食文化绵延五千年，蕴含着哲学、艺术与生活智慧，是中华文明的重要组成部分。
+          </p>
+        </div>
+      </section>
+      <section class="bg-white py-14 md:py-20">
+        <div class="max-w-6xl mx-auto px-4 md:px-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div>
+              <p class="text-vermilion text-xs tracking-[0.3em] uppercase mb-3">
+                民以食为天
+              </p>
+              <h2
+                class="font-serif text-3xl md:text-4xl font-bold mb-6 leading-tight"
+              >
+                饮食，是中国<br />文化的根与魂
+              </h2>
+              <p class="text-inkblack/70 text-sm leading-relaxed mb-4">
+                中国有着世界上最悠久、最多元的饮食文化传统。从《礼记》中的饮食之礼，到《随园食单》中的烹饪之道；从宫廷的精致珍馐，到民间的家常便饭，饮食贯穿了中国人生活的方方面面。
+              </p>
+              <p class="text-inkblack/70 text-sm leading-relaxed">
+                "民以食为天"这句古语，深刻道出了饮食在中国文化中的核心地位。不同于西方饮食文化中对营养的强调，中国人更注重饮食的"道"——阴阳调和、五味平衡、天人合一。
+              </p>
+            </div>
+            <div class="bg-mist p-8 border-l-4 border-vermilion">
+              <blockquote
+                class="font-serif text-2xl text-inkblack/80 italic leading-relaxed mb-4"
+              >
+                "夫礼之初，始诸饮食。"
+              </blockquote>
+              <p class="text-xs text-inkblack/40 tracking-widest">——《礼记》</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="bg-mist py-14 md:py-20">
+        <div class="max-w-6xl mx-auto px-4 md:px-6">
+          <div class="text-center mb-12">
+            <p class="text-vermilion text-xs tracking-[0.3em] uppercase mb-2">
+              中华饮食哲学
+            </p>
+            <h2 class="font-serif text-3xl md:text-4xl font-bold">五味调和</h2>
+            <p class="text-inkblack/50 mt-3 text-sm">
+              酸、甜、苦、辣、咸——五味相生相克，是中国烹饪的核心哲学
+            </p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div class="bg-white p-6 text-center border border-stone-100">
+              <div class="text-4xl mb-3">🍋</div>
+              <h3 class="font-serif text-xl font-bold text-green-700 mb-2">
+                酸
+              </h3>
+              <p class="text-xs text-inkblack/60 leading-relaxed">
+                入肝，开胃生津，对应木性。醋、柠檬、酸菜皆为代表。
+              </p>
+            </div>
+            <div class="bg-white p-6 text-center border border-stone-100">
+              <div class="text-4xl mb-3">🍯</div>
+              <h3 class="font-serif text-xl font-bold text-amber-600 mb-2">
+                甜
+              </h3>
+              <p class="text-xs text-inkblack/60 leading-relaxed">
+                入脾，补气益血，对应土性。糖、蜜、甜面酱皆为代表。
+              </p>
+            </div>
+            <div class="bg-white p-6 text-center border border-stone-100">
+              <div class="text-4xl mb-3">☕</div>
+              <h3 class="font-serif text-xl font-bold text-stone-600 mb-2">
+                苦
+              </h3>
+              <p class="text-xs text-inkblack/60 leading-relaxed">
+                入心，清热解毒，对应火性。苦瓜、茶叶皆为代表。
+              </p>
+            </div>
+            <div class="bg-white p-6 text-center border border-stone-100">
+              <div class="text-4xl mb-3">🌶️</div>
+              <h3 class="font-serif text-xl font-bold text-red-600 mb-2">辣</h3>
+              <p class="text-xs text-inkblack/60 leading-relaxed">
+                入肺，驱寒除湿，对应金性。辣椒、花椒、姜皆为代表。
+              </p>
+            </div>
+            <div class="bg-white p-6 text-center border border-stone-100">
+              <div class="text-4xl mb-3">🧂</div>
+              <h3 class="font-serif text-xl font-bold text-blue-700 mb-2">
+                咸
+              </h3>
+              <p class="text-xs text-inkblack/60 leading-relaxed">
+                入肾，软坚散结，对应水性。盐、酱油、豆豉皆为代表。
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="bg-white py-14 md:py-20">
+        <div class="max-w-4xl mx-auto px-4 md:px-6">
+          <div class="text-center mb-12">
+            <p class="text-vermilion text-xs tracking-[0.3em] uppercase mb-2">
+              历史沿革
+            </p>
+            <h2 class="font-serif text-3xl md:text-4xl font-bold">
+              中国饮食文化发展史
+            </h2>
+          </div>
+          <div class="space-y-8">
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="bg-mist p-6">
+                <div class="text-xs text-vermilion tracking-widest mb-1">
+                  约前8000年
+                </div>
+                <h3 class="font-serif text-lg font-bold mb-2">
+                  农业文明的开端
+                </h3>
+                <p class="text-inkblack/70 text-sm leading-relaxed">
+                  中国先民开始种植粟、稻等作物，驯化猪、鸡等家畜。陶器的发明使烹饪成为可能，奠定了中国饮食文化的物质基础。
+                </p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="bg-mist p-6">
+                <div class="text-xs text-vermilion tracking-widest mb-1">
+                  夏商周时期
+                </div>
+                <h3 class="font-serif text-lg font-bold mb-2">
+                  饮食礼制的形成
+                </h3>
+                <p class="text-inkblack/70 text-sm leading-relaxed">
+                  周代形成了完整的饮食礼制，"食不厌精，脍不厌细"的饮食观开始萌芽。青铜器的出现使烹饪器具更加精美，宴飨礼仪成为国家礼制的重要组成。
+                </p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="bg-mist p-6">
+                <div class="text-xs text-vermilion tracking-widest mb-1">
+                  汉唐盛世
+                </div>
+                <h3 class="font-serif text-lg font-bold mb-2">
+                  丝路美食的交融
+                </h3>
+                <p class="text-inkblack/70 text-sm leading-relaxed">
+                  张骞出使西域，带回胡椒、芝麻、葡萄等食材，极大丰富了中国饮食的食材库。唐代长安成为国际美食都市，胡食与汉食相互融合，烹饪技法得到空前发展。
+                </p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="bg-mist p-6">
+                <div class="text-xs text-vermilion tracking-widest mb-1">
+                  宋元明清
+                </div>
+                <h3 class="font-serif text-lg font-bold mb-2">
+                  菜系格局的奠定
+                </h3>
+                <p class="text-inkblack/70 text-sm leading-relaxed">
+                  宋代市井饮食文化繁荣，饭馆、酒楼遍布城市。明清时期，八大菜系的雏形逐渐形成，袁枚《随园食单》系统总结烹饪理论，将中国饮食文化推向高峰。
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="hero-bg text-white py-14">
+        <div class="max-w-6xl mx-auto px-4 md:px-6">
+          <div class="text-center mb-10">
+            <p class="text-gold text-xs tracking-[0.3em] uppercase mb-2">
+              节令饮食
+            </p>
+            <h2 class="font-serif text-3xl md:text-4xl font-bold">
+              一年十二月，月月有美食
+            </h2>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div
+              class="bg-white/10 p-4 text-center hover:bg-white/20 transition-colors"
+            >
+              <div class="text-3xl mb-2">🥟</div>
+              <div class="font-serif text-sm font-bold">春节</div>
+              <div class="text-cream/60 text-xs mt-1">饺子·年糕·汤圆</div>
+            </div>
+            <div
+              class="bg-white/10 p-4 text-center hover:bg-white/20 transition-colors"
+            >
+              <div class="text-3xl mb-2">🥚</div>
+              <div class="font-serif text-sm font-bold">清明</div>
+              <div class="text-cream/60 text-xs mt-1">青团·寒食</div>
+            </div>
+            <div
+              class="bg-white/10 p-4 text-center hover:bg-white/20 transition-colors"
+            >
+              <div class="text-3xl mb-2">🎋</div>
+              <div class="font-serif text-sm font-bold">端午</div>
+              <div class="text-cream/60 text-xs mt-1">粽子·雄黄酒</div>
+            </div>
+            <div
+              class="bg-white/10 p-4 text-center hover:bg-white/20 transition-colors"
+            >
+              <div class="text-3xl mb-2">🥮</div>
+              <div class="font-serif text-sm font-bold">中秋</div>
+              <div class="text-cream/60 text-xs mt-1">月饼·柚子</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ========================================
+     页面5：留言互动
+     ======================================== -->
+    <div id="page-message" class="page">
+      <section class="hero-bg text-white py-16">
+        <div class="max-w-6xl mx-auto px-4 md:px-6">
+          <p class="text-gold text-xs tracking-[0.3em] uppercase mb-3">
+            GUESTBOOK
+          </p>
+          <h1 class="font-serif text-4xl md:text-5xl font-bold mb-4">
+            留言互动
+          </h1>
+          <p class="text-cream/70 font-light max-w-lg">
+            分享你与中国美食的故事，让更多人感受食物带来的温暖与记忆。
+          </p>
+        </div>
+      </section>
+      <section class="py-14 md:py-20">
+        <div class="max-w-4xl mx-auto px-4 md:px-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div>
+              <h2 class="font-serif text-2xl font-bold mb-6">
+                写下你的美食故事
+              </h2>
+              <div id="messageForm">
+                <div class="mb-5">
+                  <label
+                    class="block text-xs tracking-widest text-inkblack/60 mb-2"
+                    >昵称 <span class="text-vermilion">*</span></label
+                  >
+                  <input
+                    type="text"
+                    id="nickname"
+                    class="form-input"
+                    placeholder="你的名字"
+                    maxlength="20"
+                  />
+                  <p class="error-msg" id="nicknameErr">
+                    请输入昵称（2-20个字符）
+                  </p>
+                </div>
+                <div class="mb-5">
+                  <label
+                    class="block text-xs tracking-widest text-inkblack/60 mb-2"
+                    >邮箱 <span class="text-vermilion">*</span></label
+                  >
+                  <input
+                    type="email"
+                    id="email"
+                    class="form-input"
+                    placeholder="your@email.com"
+                  />
+                  <p class="error-msg" id="emailErr">请输入有效的邮箱地址</p>
+                </div>
+                <div class="mb-5">
+                  <label
+                    class="block text-xs tracking-widest text-inkblack/60 mb-2"
+                    >最爱的菜系</label
+                  >
+                  <select id="cuisine" class="form-input">
+                    <option value="">— 请选择 —</option>
+                    <option>川菜</option>
+                    <option>粤菜</option>
+                    <option>苏菜</option>
+                    <option>湘菜</option>
+                    <option>鲁菜</option>
+                    <option>浙菜</option>
+                    <option>闽菜</option>
+                    <option>徽菜</option>
+                  </select>
+                </div>
+                <div class="mb-5">
+                  <label
+                    class="block text-xs tracking-widest text-inkblack/60 mb-2"
+                    >评分</label
+                  >
+                  <div class="flex gap-1" id="ratingStars">
+                    <span class="rating-star" onclick="setRating(1)">☆</span>
+                    <span class="rating-star" onclick="setRating(2)">☆</span>
+                    <span class="rating-star" onclick="setRating(3)">☆</span>
+                    <span class="rating-star" onclick="setRating(4)">☆</span>
+                    <span class="rating-star" onclick="setRating(5)">☆</span>
+                  </div>
+                </div>
+                <div class="mb-6">
+                  <label
+                    class="block text-xs tracking-widest text-inkblack/60 mb-2"
+                    >留言内容 <span class="text-vermilion">*</span></label
+                  >
+                  <textarea
+                    id="content"
+                    class="form-input resize-none h-32"
+                    placeholder="分享你与中国美食的故事或感受..."
+                    maxlength="300"
+                    oninput="updateCounter()"
+                  ></textarea>
+                  <div class="flex justify-between items-center mt-1">
+                    <p class="error-msg" id="contentErr">
+                      请输入留言内容（10-300个字符）
+                    </p>
+                    <div class="char-counter ml-auto" id="charCounter">
+                      0 / 300
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onclick="submitForm()"
+                  class="btn-primary w-full text-center"
+                >
+                  提交留言
+                </button>
+              </div>
+              <div
+                id="successMsg"
+                class="hidden mt-4 bg-green-50 border border-green-200 p-4 text-green-800 text-sm"
+              >
+                ✓ 留言提交成功！感谢你的分享。
+              </div>
+            </div>
+            <div>
+              <h2 class="font-serif text-2xl font-bold mb-6">食客留言</h2>
+              <div id="messagesList" class="space-y-4">
+                <div class="msg-card bg-white border border-stone-100 p-5">
+                  <div class="flex justify-between items-start mb-2">
+                    <div>
+                      <span class="font-medium text-sm">美食探索家小李</span
+                      ><span class="text-xs text-inkblack/30 ml-2"
+                        >川菜爱好者</span
+                      >
+                    </div>
+                    <div class="text-gold text-sm">★★★★★</div>
+                  </div>
+                  <p class="text-inkblack/70 text-sm leading-relaxed">
+                    在成都吃到正宗的麻婆豆腐，那一刻感觉人生圆满了！豆腐嫩如豆花，麻辣刺激，和家里做的完全不同境界。
+                  </p>
+                  <div class="text-xs text-inkblack/30 mt-2">2026-6-1</div>
+                </div>
+                <div class="msg-card bg-white border border-stone-100 p-5">
+                  <div class="flex justify-between items-start mb-2">
+                    <div>
+                      <span class="font-medium text-sm">广州吃货阿明</span
+                      ><span class="text-xs text-inkblack/30 ml-2"
+                        >粤菜爱好者</span
+                      >
+                    </div>
+                    <div class="text-gold text-sm">★★★★☆</div>
+                  </div>
+                  <p class="text-inkblack/70 text-sm leading-relaxed">
+                    每个周末和家人一起去茶楼饮茶，虾饺、肠粉、叉烧包……这种仪式感是广东人生活的一部分，外地朋友来一定要体验！
+                  </p>
+                  <div class="text-xs text-inkblack/30 mt-2">2026-5-10</div>
+                </div>
+                <div class="msg-card bg-white border border-stone-100 p-5">
+                  <div class="flex justify-between items-start mb-2">
+                    <div>
+                      <span class="font-medium text-sm">北漂小杨</span
+                      ><span class="text-xs text-inkblack/30 ml-2"
+                        >鲁菜爱好者</span
+                      >
+                    </div>
+                    <div class="text-gold text-sm">★★★★★</div>
+                  </div>
+                  <p class="text-inkblack/70 text-sm leading-relaxed">
+                    这个网站做得真好！让我重新认识了家乡的鲁菜文化，没想到葱烧海参背后有这么丰富的历史渊源。
+                  </p>
+                  <div class="text-xs text-inkblack/30 mt-2">2026-5-08</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ===== 公共 Footer ===== -->
+    <footer class="bg-inkblack text-cream/60 py-10">
+      <div class="max-w-6xl mx-auto px-4 md:px-6">
+        <div class="flex flex-col md:flex-row justify-between gap-6">
+          <div>
+            <div class="font-serif text-gold text-lg mb-2">食在中国</div>
+            <p class="text-xs leading-relaxed max-w-xs">
+              探索中国八大菜系，传承千年饮食文化，感受舌尖上的中国之美。
+            </p>
+          </div>
+          <div>
+            <div class="text-cream/80 text-xs tracking-widest uppercase mb-3">
+              页面导航
+            </div>
+            <ul class="space-y-2 text-xs">
+              <li>
+                <span
+                  onclick="showPage('regions')"
+                  class="hover:text-gold transition-colors cursor-pointer"
+                  >地区美食</span
+                >
+              </li>
+              <li>
+                <span
+                  onclick="showPage('recipes')"
+                  class="hover:text-gold transition-colors cursor-pointer"
+                  >经典菜谱</span
+                >
+              </li>
+              <li>
+                <span
+                  onclick="showPage('culture')"
+                  class="hover:text-gold transition-colors cursor-pointer"
+                  >饮食文化</span
+                >
+              </li>
+              <li>
+                <span
+                  onclick="showPage('message')"
+                  class="hover:text-gold transition-colors cursor-pointer"
+                  >留言互动</span
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="border-t border-white/10 mt-8 pt-6 text-center text-xs">
+          © 2026 食在中国 · 地方美食文化展示平台 · 仅供学习交流使用
+        </div>
+      </div>
+    </footer>
+
+    <!-- ===== 返回顶部 ===== -->
+    <button
+      id="backToTop"
+      onclick="window.scrollTo({ top: 0, behavior: 'smooth' })"
+      style="
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        background: #c0392b;
+        color: white;
+        width: 44px;
+        height: 44px;
+        border: none;
+        font-size: 1.25rem;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.3s;
+        z-index: 99;
+        border-radius: 2px;
+      "
+    >
+      ↑
+    </button>
+
+    <script>
+      // ===================================================
+      // 1. 页面路由
+      // ===================================================
+      const pages = ["home", "regions", "recipes", "culture", "message"];
+
+      function showPage(name) {
+        pages.forEach((p) => {
+          document
+            .getElementById("page-" + p)
+            .classList.toggle("active", p === name);
+          const navEl = document.getElementById("nav-" + p);
+          if (navEl) navEl.classList.toggle("active", p === name);
+        });
+        window.scrollTo({ top: 0 });
+        // 切换到首页时重启轮播
+        if (name === "home") {
+          resetAutoplay();
+        }
+      }
+
+      // 初始激活首页导航
+      document.getElementById("nav-home").classList.add("active");
+
+      // ===================================================
+      // 2. 移动端菜单
+      // ===================================================
+      document.getElementById("menuBtn").addEventListener("click", () => {
+        document.getElementById("mobileMenu").classList.toggle("hidden");
+      });
+      function closeMobile() {
+        document.getElementById("mobileMenu").classList.add("hidden");
+      }
+
+      // ===================================================
+      // 3. 轮播图
+      // ===================================================
+      let currentSlide = 0;
+      let autoplayTimer = null;
+
+      function showSlide(index) {
+        const slides = document.querySelectorAll(".carousel-item");
+        const dots = document.querySelectorAll(".dot");
+        if (!slides.length) return;
+        if (index >= slides.length) index = 0;
+        if (index < 0) index = slides.length - 1;
+        currentSlide = index;
+        slides.forEach((s, i) => {
+          s.classList.toggle("active", i === currentSlide);
+        });
+        dots.forEach((d, i) => {
+          d.classList.toggle("bg-white", i === currentSlide);
+          d.classList.toggle("bg-white/50", i !== currentSlide);
+        });
+      }
+      function changeSlide(dir) {
+        showSlide(currentSlide + dir);
+        resetAutoplay();
+      }
+      function goToSlide(idx) {
+        showSlide(idx);
+        resetAutoplay();
+      }
+      function startAutoplay() {
+        autoplayTimer = setInterval(() => showSlide(currentSlide + 1), 4000);
+      }
+      function resetAutoplay() {
+        if (autoplayTimer) clearInterval(autoplayTimer);
+        startAutoplay();
+      }
+
+      showSlide(0);
+      startAutoplay();
+
+      // ===================================================
+      // 4. 返回顶部
+      // ===================================================
+      const topBtn = document.getElementById("backToTop");
+      window.addEventListener("scroll", () => {
+        topBtn.style.opacity = window.scrollY > 300 ? "1" : "0";
+      });
+
+      // ===================================================
+      // 5. 地区筛选
+      // ===================================================
+      function filterRegion(type, btn) {
+        document
+          .querySelectorAll(".filter-btn")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        document.querySelectorAll(".region-card").forEach((card) => {
+          card.style.display =
+            type === "all" || card.dataset.type === type ? "" : "none";
+        });
+      }
+
+      // ===================================================
+      // 5b. 菜系详情数据与渲染
+      // ===================================================
+      const cuisineData = {
+        sichuan: {
+          name: "川菜",
+          en: "SICHUAN CUISINE",
+          region: "四川 · 重庆",
+          headerBg: "from-red-900 to-red-700",
+          tagBg: "bg-red-50 text-red-700",
+          accent: "text-red-700",
+          border: "border-red-200",
+          coverImg: "./images/ChuanCai.png",
+          desc: '川菜是中国最具国际影响力的菜系之一，起源于古巴蜀之地，历史逾两千年。其味型丰富多变，涵盖麻辣、红油、鱼香、怪味、酸辣、椒麻等二十四种基本味型，被誉为"一菜一格，百菜百味"。川菜善用辣椒、花椒、豆瓣酱、泡椒等调料，在辛辣中追求层次，麻辣并非单一刺激，而是多种味道相互交织的复合享受。川菜分为成都、重庆两大支系，成都菜精致典雅，重庆菜粗犷豪迈，共同构成川菜的辽阔版图。',
+          dishes: [
+            {
+              name: "麻婆豆腐",
+              img: "./images/MaPoDouFu.png",
+              desc: "豆腐软嫩，麻辣鲜香，以郫县豆瓣酱和花椒为魂，是四川家常菜的代表。",
+              tags: ["豆腐", "豆瓣酱", "花椒", "肉末"],
+              recipe: [
+                "嫩豆腐切丁，淡盐水泡5分钟备用。",
+                "热锅下油，炒香肉末，加郫县豆瓣酱、蒜姜末炒出红油。",
+                "加约300ml高汤，下豆腐轻推，生抽调味，中火煮5分钟。",
+                "水淀粉勾芡，出锅撒花椒粉和葱花。",
+              ],
+            },
+            {
+              name: "宫保鸡丁",
+              img: "./images/GongBaoJiDing.png",
+              desc: "鸡丁嫩滑，辣而不燥，花生香脆，酸甜微辣，是最广为人知的川菜之一。",
+              tags: ["鸡丁", "干辣椒", "花生", "葱段"],
+              recipe: [
+                "鸡丁用盐、酱油、淀粉腌10分钟。",
+                "调酱汁：生抽、醋、糖、水淀粉混合。",
+                "热锅爆香干辣椒、花椒，下鸡丁翻炒至变色。",
+                "加葱段、花生，倒入酱汁大火翻炒均匀。",
+              ],
+            },
+            {
+              name: "水煮鱼",
+              img: "./images/ShuiZhuYu.png",
+              desc: "鱼片嫩滑，汤底鲜红，麻辣浓烈，豆芽垫底吸收汤汁，是重庆江湖菜代表。",
+              tags: ["草鱼片", "豆芽", "干辣椒", "花椒"],
+              recipe: [
+                "鱼片加盐、料酒、淀粉、蛋白腌15分钟。",
+                "热锅炒豆瓣酱、干辣椒、花椒出香，加高汤烧开。",
+                "豆芽焯水垫碗底，鱼片下锅滑熟盛碗。",
+                "碗面铺干辣椒花椒，淋热油激香。",
+              ],
+            },
+          ],
+        },
+        cantonese: {
+          name: "粤菜",
+          en: "CANTONESE CUISINE",
+          region: "广东 · 香港 · 澳门",
+          headerBg: "from-amber-800 to-amber-600",
+          tagBg: "bg-amber-50 text-amber-700",
+          accent: "text-amber-700",
+          border: "border-amber-200",
+          coverImg: "./images/YueCai.png",
+          desc: '粤菜发源于岭南，以广府、潮汕、客家三大支系构成，是中国最具国际知名度的菜系。粤菜讲究"原汁原味"，擅用蒸、炒、焖、煲等技法，食材要求新鲜应季，调味以清淡为主，最大限度保留食材本味。广式早茶是粤菜文化中最具仪式感的饮食传统，每逢周末，家人聚于茶楼，边饮茶边享用虾饺、烧麦、肠粉，谈天说地，是南粤生活方式的缩影。',
+          shunde: true,
+          dishes: [
+            {
+              name: "白切鸡",
+              img: "./images/BaiQieJi.png",
+              desc: "皮脆肉嫩，原汁原味，蘸以姜蓉葱油，最大程度还原鸡肉本味，是粤菜清淡哲学的极致体现。",
+              tags: ["清远鸡", "姜蓉", "葱油", "生抽"],
+              recipe: [
+                "整鸡洗净，锅中加姜葱料酒，水烧至将沸时下鸡。",
+                "小火保持微沸状态浸煮约20分钟，捞出立即过冰水。",
+                "鸡皮收紧后斩件装盘。",
+                "热油爆香姜蓉葱末，加盐、生抽调成蘸料。",
+              ],
+            },
+            {
+              name: "虾饺",
+              img: "./images/XiaJiao.png",
+              desc: '晶莹剔透的澄粉皮包裹着鲜虾馅，皮薄馅嫩，是广式早茶"四大天王"之首。',
+              tags: ["鲜虾", "澄粉", "猪肥膘", "竹笋"],
+              recipe: [
+                "澄粉加生粉，开水烫熟揉匀，醒10分钟。",
+                "虾仁去肠，一半剁泥一半切粒，加笋粒、肥膘、盐、糖、麻油拌馅。",
+                "将皮擀薄，包入馅料捏成弯梳形。",
+                "蒸笼大火蒸6-8分钟即可。",
+              ],
+            },
+            {
+              name: "老火靓汤",
+              img: "./images/LaoHuoLiangTang.png",
+              desc: "广东人对汤的执念举世皆知，老火汤小火慢煲数小时，食材精华尽入汤中，温润滋补。",
+              tags: ["猪骨", "药材", "时蔬", "慢火"],
+              recipe: [
+                "猪骨冷水下锅焯水洗净。",
+                "汤锅加足量清水，放入猪骨、食材。",
+                "大火烧开转小火，煲2-3小时。",
+                "出锅前加适量盐调味，汤色清澈浓郁。",
+              ],
+            },
+          ],
+        },
+        jiangsu: {
+          name: "苏菜",
+          en: "JIANGSU CUISINE",
+          region: "江苏 · 南京 · 苏州",
+          headerBg: "from-teal-800 to-teal-600",
+          tagBg: "bg-teal-50 text-teal-700",
+          accent: "text-teal-700",
+          border: "border-teal-200",
+          coverImg: "./images/SuCai.png",
+          desc: "苏菜是中国四大菜系之一，以淮扬菜为核心，涵盖金陵菜、苏锡菜、徐海菜等地方风格。苏菜以精致典雅著称，是历代宫廷御膳的重要来源，乾隆南巡时多次赞誉。其刀工极为考究，能将豆腐切成细如发丝，将一颗萝卜雕成花篮，以食材造型诠释烹饪艺术。口味偏清淡甜鲜，注重汤汁的醇厚，成菜色泽红亮，形态精美，是中国饮食美学的代表。",
+          dishes: [
+            {
+              name: "松鼠桂鱼",
+              img: "./images/SongShuGuiYu.png",
+              desc: "刀工精湛，切花后油炸定形似松鼠，浇上酸甜汁，外酥里嫩，形色香味俱全，是苏州菜的镇店名菜。",
+              tags: ["桂鱼", "番茄汁", "白糖", "香醋"],
+              recipe: [
+                "桂鱼去骨，从背部打花刀，拍粉备用。",
+                "180°C油温炸至金黄定形，捞出装盘。",
+                "锅留底油，番茄酱、糖、醋、水淀粉调成酸甜汁烧开。",
+                "酱汁淋在鱼身上，撒松子即可。",
+              ],
+            },
+            {
+              name: "大煮干丝",
+              img: "./images/GanSi.png",
+              desc: "豆腐干切成极细丝，与鸡丝、虾仁同煮，汤汁鲜美入味，是扬州早茶中最考验刀工的一道名菜。",
+              tags: ["豆腐干", "鸡汤", "虾仁", "姜丝"],
+              recipe: [
+                "豆腐干片薄，切成细如火柴棍的细丝，焯水备用。",
+                "高汤烧开，下干丝、鸡丝、虾仁一同慢煮。",
+                "大火收汁，使干丝充分吸收汤汁鲜味。",
+                "盛碗后放上姜丝、火腿丝点缀。",
+              ],
+            },
+            {
+              name: "清炖蟹粉狮子头",
+              img: "./images/QingDunXieFenShiZiTou.png",
+              desc: "以蟹肉蟹黄与猪肉糜制成大肉丸，清炖后肉质松软如豆腐，蟹香四溢，是淮扬菜中最具代表性的珍馐。",
+              tags: ["蟹粉", "猪肉糜", "白菜心", "高汤"],
+              recipe: [
+                "蟹黄蟹肉与肥瘦猪肉糜混合，加盐、姜水、淀粉搅打上劲。",
+                "手轻轻团成大圆球，不可过度挤压。",
+                "砂锅下白菜心，放入狮子头，加高汤至没过。",
+                "大火烧开转小火，清炖1.5小时至酥软入味。",
+              ],
+            },
+          ],
+        },
+        hunan: {
+          name: "湘菜",
+          en: "HUNAN CUISINE",
+          region: "湖南 · 长沙 · 湘西",
+          headerBg: "from-orange-800 to-orange-600",
+          tagBg: "bg-orange-50 text-orange-700",
+          accent: "text-orange-700",
+          border: "border-orange-200",
+          coverImg: "./images/XiangCai.png",
+          desc: '湘菜以辣著称，但与川菜的麻辣截然不同——湘菜是纯粹的辣，香辣酸辣并重，口感更加直接热烈。湖南地处亚热带，气候潮湿，辣椒有助驱湿，因此辣椒深入湘人日常饮食。湘菜善用腊肉、剁辣椒、豆豉等发酵食材，赋予菜肴浓郁的地方风味。毛泽东家乡菜"红烧肉"、"剁椒鱼头"等早已成为湘菜走向全国的名片，长沙夜宵文化更是吸引了无数食客慕名而来。',
+          dishes: [
+            {
+              name: "剁椒鱼头",
+              img: "./images/DuoJiaoYuTou.png",
+              desc: "鳙鱼头蒸制，铺满自制剁辣椒，鱼肉鲜嫩，剁椒鲜辣酸香，最后淋热油激香，是湘菜最著名的代表作。",
+              tags: ["鳙鱼头", "剁辣椒", "豆豉", "姜蒜"],
+              recipe: [
+                "鱼头从中劈开，两面抹盐腌15分钟。",
+                "剁辣椒加豆豉、蒜末、姜末、油盐拌匀。",
+                "剁辣椒厚铺鱼头上，大火蒸12-15分钟。",
+                "出锅撒葱花，淋热油激香即可。",
+              ],
+            },
+            {
+              name: "毛氏红烧肉",
+              img: "./images/MaoShiHongShaoRou.png",
+              desc: "以五花肉入冰糖上色，红烧至酥烂，色泽红亮，肥而不腻，是毛泽东最爱的家乡菜，已成湘菜经典。",
+              tags: ["五花肉", "冰糖", "八角", "老抽"],
+              recipe: [
+                "五花肉切大块，冷水焯水去腥。",
+                "锅中下冰糖炒至焦糖色，放入肉块翻炒上色。",
+                "加料酒、老抽、八角、姜，补水没过肉块。",
+                "大火烧开转小火焖1小时至酥软，大火收汁。",
+              ],
+            },
+            {
+              name: "东安子鸡",
+              img: "./images/DongAnZiJi.png",
+              desc: "起源于东安县，以嫩母鸡配以酸辣调味，鸡肉鲜嫩滑润，酸辣清爽，是湘菜中最具历史渊源的名菜之一。",
+              tags: ["嫩母鸡", "干辣椒", "香醋", "花椒"],
+              recipe: [
+                "嫩鸡剁块，焯水备用。",
+                "热锅爆香干辣椒、花椒，下鸡块大火翻炒。",
+                "加料酒、盐、姜丝，翻炒均匀。",
+                "临出锅沿锅边淋入香醋，大火翻匀即可。",
+              ],
+            },
+          ],
+        },
+        shandong: {
+          name: "鲁菜",
+          en: "SHANDONG CUISINE",
+          region: "山东 · 济南 · 青岛",
+          headerBg: "from-blue-900 to-blue-700",
+          tagBg: "bg-blue-50 text-blue-700",
+          accent: "text-blue-700",
+          border: "border-blue-200",
+          coverImg: "./images/LuCai.png",
+          desc: '鲁菜是中国八大菜系之首，也是历史最为悠久的菜系，其形成可追溯至春秋战国时期，孔子"食不厌精、脍不厌细"的饮食观念深刻影响了鲁菜的烹饪哲学。作为中国官府菜的重要代表，鲁菜长期主导宫廷御膳，北京菜的形成也深受鲁菜影响。鲁菜以咸鲜醇厚为主要口味，擅于以葱、姜为香料基础，烹调技法涵盖爆、炒、溜、扒、烧、蒸等几乎所有中式技法，食材以海鲜、畜禽为主，是中国饮食文化中的一座重要丰碑。',
+          dishes: [
+            {
+              name: "葱烧海参",
+              img: "./images/CongShaoHaiShen.png",
+              desc: "海参软糯鲜美，以大葱爆香后烧制，葱香与海参鲜味完美融合，汤汁浓稠，是鲁菜中最具代表性的高档名菜。",
+              tags: ["刺参", "大葱", "酱油", "高汤"],
+              recipe: [
+                "海参提前泡发，斜刀切段备用。",
+                "大葱切段，热油炸至金黄取出，油留锅中。",
+                "下葱油、生抽、老抽、糖、高汤烧开。",
+                "下海参，小火烧10分钟，大火收汁，葱段回锅。",
+              ],
+            },
+            {
+              name: "糖醋黄河鲤鱼",
+              img: "./images/TangCuHuangHeLiYu.png",
+              desc: "选用黄河鲤鱼，打花刀油炸后浇糖醋汁，外酥里嫩，酸甜适口，鱼身弯起似跳龙门，是济南的节令名菜。",
+              tags: ["黄河鲤鱼", "醋", "白糖", "番茄酱"],
+              recipe: [
+                "鲤鱼两侧打斜刀，腌15分钟，拍粉。",
+                "热油180°C将鱼炸至弯起定形，捞出复炸至酥脆。",
+                "锅中调制糖醋汁（糖醋比例2:1），烧开勾芡。",
+                "将汁淋在鱼身上，撒葱姜丝。",
+              ],
+            },
+            {
+              name: "九转大肠",
+              img: "./images/JiuZhuanDaChang.png",
+              desc: "猪大肠经九道工序处理烹制，色泽红亮，口感软糯有嚼劲，酸甜苦辣咸五味俱全，是济南最独特的鲁菜名肴。",
+              tags: ["猪大肠", "香醋", "白糖", "肉桂"],
+              recipe: [
+                "猪大肠反复清洗，焯水去腥，切段。",
+                "热油炸至大肠表面金黄紧缩。",
+                "锅中下香料、酱油、醋、糖调汁，放入大肠。",
+                "小火慢烧20分钟，大火收汁至红亮浓稠。",
+              ],
+            },
+          ],
+        },
+        zhejiang: {
+          name: "浙菜",
+          en: "ZHEJIANG CUISINE",
+          region: "浙江 · 杭州 · 宁波",
+          headerBg: "from-green-800 to-green-600",
+          tagBg: "bg-green-50 text-green-700",
+          accent: "text-green-700",
+          border: "border-green-200",
+          coverImg: "./images/ZheCai.png",
+          desc: '浙菜以杭州菜为核心，融合宁波、绍兴、温州等地饮食风格，以"清、香、脆、嫩、爽、鲜"六字著称。浙菜与吴越文化一脉相承，善用当地特产：西湖的莼菜、龙井的茶叶、绍兴的黄酒，皆是浙菜中独特的灵魂食材。浙菜的刀工精细考究，注重食材的原形与色泽，追求"形美如画"的视觉效果，是中国美食美学的重要代表。东坡肉、龙井虾仁、西湖醋鱼被誉为杭州三绝，名传天下。',
+          dishes: [
+            {
+              name: "西湖醋鱼",
+              img: "./images/XiHuCuYu.png",
+              desc: "选用西湖草鱼，浸熟后浇酸甜醋汁，鱼肉鲜嫩，汁水酸甜，微带蟹味，是杭州最具代表性的传统名菜。",
+              tags: ["草鱼", "香醋", "白糖", "姜末"],
+              recipe: [
+                "草鱼劈成雌雄两片，沸水下锅浸煮8-10分钟。",
+                "另锅下高汤、醋、糖、生抽，烧开勾薄芡。",
+                "鱼捞出装盘，浇上酸甜汁，撒姜末。",
+              ],
+            },
+            {
+              name: "东坡肉",
+              img: "./images/DongPoRou.png",
+              desc: "苏东坡所创，五花肉经黄酒、酱油慢焖，色泽红亮，肥而不腻，软糯入味，是千年流传的文人美食。",
+              tags: ["五花肉", "绍兴黄酒", "老抽", "冰糖"],
+              recipe: [
+                "五花肉焯水切大块，肉皮朝下入砂锅。",
+                "加黄酒、老抽、生抽、冰糖，补水至肉面。",
+                "大火烧开转最小火焖90分钟，翻面一次。",
+                "开盖大火收汁，肉皮朝上装碗，浇汁。",
+              ],
+            },
+            {
+              name: "龙井虾仁",
+              img: "./images/LongJingXiaRen.png",
+              desc: "以明前龙井茶叶入菜，与鲜虾仁同炒，茶香清幽与虾仁鲜甜相互映衬，是以茶入馔的浙菜经典之作。",
+              tags: ["鲜虾仁", "龙井新茶", "蛋白", "茶汤"],
+              recipe: [
+                "虾仁用蛋白、淀粉、盐腌10分钟。",
+                "龙井茶叶用70°C水泡开，取茶汤和嫩叶备用。",
+                "热锅温油，下虾仁快速滑散至变色捞出。",
+                "原锅下茶叶和茶汤，回入虾仁，快速翻炒出锅。",
+              ],
+            },
+          ],
+        },
+        shunde: {
+          name: "顺德美食",
+          en: "SHUNDE CUISINE",
+          region: "广东顺德 · 世界美食之都",
+          headerBg: "from-amber-800 to-amber-500",
+          tagBg: "bg-amber-50 text-amber-700",
+          accent: "text-amber-700",
+          border: "border-amber-200",
+          coverImg: "./images/ShunDeMeiShi.png",
+          shunde: false,
+          desc: '顺德，古称凤城，地处珠三角腹地，拥有五百余年饮食文化积淀。"食在广东，厨出凤城"，顺德厨师自明清起便以精湛厨艺誉满岭南。2014年，联合国教科文组织正式将顺德列为"世界美食之都"，是中国第一个获此殊荣的城市。顺德菜以河鲜、禽类为主要食材，以极致刀工和对食材本味的尊重著称，双皮奶、鱼生、伦教糕已成举世闻名的饮食瑰宝。',
+          dishes: [
+            {
+              name: "顺德双皮奶",
+              img: "./images/ShuangPiNai.png",
+              desc: "起源于清朝道光年间，以水牛奶为原料形成双层奶皮，质地细腻如脂，入口即化，奶香浓郁，是岭南甜品之冠。",
+              tags: ["水牛奶", "蛋白", "冰糖", "蒸制"],
+              recipe: [
+                "水牛奶加热至80°C，倒入碗中冷却至表面结成第一层奶皮。",
+                "轻轻将奶液从碗边倒出，保留奶皮于碗底。",
+                "奶液加入打散蛋白和冰糖液，过滤后轻轻沿碗边倒回，令蛋白液浮于奶皮之上。",
+                "封保鲜膜，蒸锅中小火蒸12分钟，关火焖3分钟即可形成双层奶皮。",
+              ],
+            },
+            {
+              name: "顺德鱼生",
+              img: "./images/ShunDeYuShen.png",
+              desc: "两千年历史传承，薄如蝉翼的鱼片配以十余种配料，多层次口感交叠，是顺德人招待贵客的最高礼仪之食。",
+              tags: ["活鲩鱼", "姜丝", "葱丝", "花生薄荷"],
+              recipe: [
+                "活鲩鱼宰杀放血，鱼肉在冰块上冷却收紧，去皮去骨。",
+                "将鱼肉片成极薄的透明鱼片，厚度以能透出手指轮廓为佳。",
+                "姜丝葱丝、薄荷叶、花生、芝麻、炸粉丝等十余种配料分碟摆放。",
+                "食用时取鱼片，配各色佐料，蘸特制腌制豉油，拌匀食用。",
+              ],
+            },
+            {
+              name: "欢姐伦教糕",
+              img: "./images/LunJiaoGao.png",
+              desc: "三百年老字号，籼米粉古法发酵蒸制，晶莹洁白，爽滑弹韧，清甜微酸，是顺德人最温柔的家乡味道。",
+              tags: ["籼米粉", "清水", "白糖", "古法发酵"],
+              recipe: [
+                "籼米洗净浸泡4小时，磨成米浆。",
+                "加入适量白糖和少量老面（酵头），置温暖处发酵6-8小时至有气泡产生。",
+                "发酵好的米浆倒入刷油的模具，表面略平整。",
+                "大火蒸约25分钟，关火焖5分钟后取出冷却切块。",
+              ],
+            },
+            {
+              name: "大良野鸡卷",
+              img: "./images/DaLiangYeJiJuan.png",
+              desc: "并非野鸡制成，以猪肉、虾米等填于腐皮炸至金黄酥脆，是顺德大良镇的百年传统小吃。",
+              tags: ["猪瘦肉", "虾米", "腐皮", "五香粉"],
+              recipe: [
+                "猪瘦肉剁细，加虾米、马蹄、葱末、五香粉、盐、糖拌匀成馅。",
+                "腐皮剪成长方形，放入适量馅料，卷成圆柱形，两端折入封口。",
+                "170°C油温，将野鸡卷炸至外表金黄酥脆。",
+                "配甜酱或辣酱食用，趁热最佳。",
+              ],
+            },
+          ],
+        },
+      };
+
+      function showCuisineDetail(key) {
+        if (key === "shunde") {
+          renderShundePage();
+          return;
+        }
+        const d = cuisineData[key];
+        if (!d) return;
+
+        const dishesHtml = d.dishes
+          .map(
+            (dish) => `
+    <div class="bg-white border border-stone-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+      <div class="relative h-44 overflow-hidden">
+        <img src="${dish.img}" alt="${dish.name}" class="w-full h-full object-cover" onerror="this.parentElement.style.background='linear-gradient(135deg,#f5f0e8,#e5d5b5)';this.style.display='none'">
+      </div>
+      <div class="p-5">
+        <h4 class="font-serif text-lg font-bold mb-2">${dish.name}</h4>
+        <p class="text-inkblack/60 text-sm leading-relaxed mb-3">${dish.desc}</p>
+        <div class="flex flex-wrap gap-1.5 mb-4">
+          ${dish.tags.map((t) => `<span class="${d.tagBg} text-xs px-2 py-0.5">${t}</span>`).join("")}
+        </div>
+        <div class="border-t border-stone-100 pt-4">
+          <div class="text-xs tracking-widest text-inkblack/40 mb-3">制作步骤</div>
+          ${dish.recipe
+            .map(
+              (step, i) => `
+            <div class="flex gap-3 items-start mb-2">
+              <div class="step-num flex-shrink-0">${i + 1}</div>
+              <p class="text-xs text-inkblack/60 leading-relaxed">${step}</p>
+            </div>`,
+            )
+            .join("")}
+        </div>
+      </div>
+    </div>
+  `,
+          )
+          .join("");
+
+        const shundeSection = d.shunde
+          ? `
+    <!-- 顺德专页入口 -->
+    <div class="mt-16 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 p-8">
+      <div class="flex flex-col md:flex-row gap-8 items-center">
+        <div class="flex-1">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="bg-amber-600 text-white text-xs px-3 py-1 tracking-widest">顺德专题</div>
+            <h3 class="font-serif text-2xl font-bold text-amber-800">食在广东，厨出凤城</h3>
+          </div>
+          <p class="text-inkblack/70 text-sm leading-relaxed mb-5">顺德，古称凤城，素有"中国厨师之乡"与"世界美食之都"的双重美誉。2014年联合国教科文组织将"世界美食之都"授予顺德，这是中国获此殊荣的第一个城市。顺德菜以河鲜、禽类为主角，以极致刀工和多样技法著称，双皮奶、鱼生、伦教糕……每一道都是岭南饮食的活态记忆。</p>
+          <div class="flex flex-wrap gap-2 mb-6">
+            <span class="bg-white border border-amber-300 text-amber-800 text-xs px-3 py-1">双皮奶</span>
+            <span class="bg-white border border-amber-300 text-amber-800 text-xs px-3 py-1">顺德鱼生</span>
+            <span class="bg-white border border-amber-300 text-amber-800 text-xs px-3 py-1">欢姐伦教糕</span>
+            <span class="bg-white border border-amber-300 text-amber-800 text-xs px-3 py-1">均安蒸猪</span>
+            <span class="bg-white border border-amber-300 text-amber-800 text-xs px-3 py-1">大良野鸡卷</span>
+            <span class="bg-white border border-amber-300 text-amber-800 text-xs px-3 py-1">炒牛奶</span>
+          </div>
+          <button onclick="showCuisineDetail('shunde')" class="btn-primary">深入探索顺德美食 →</button>
+        </div>
+        <div class="md:w-56 text-center">
+          <div class="bg-white border border-amber-200 p-5 shadow-md">
+            <div class="text-5xl mb-3">🎬</div>
+            <div class="font-serif text-base font-bold text-amber-800 mb-2">《寻味顺德》</div>
+            <p class="text-xs text-inkblack/60 mb-3 leading-relaxed">纪录片以顺德美食为线索，记录一座城市的味道与记忆</p>
+            <a href="https://www.bilibili.com/video/BV1WV411G7s3/?spm_id_from=333.337.search-card.all.click&vd_source=8e9231a281a9df5a9a1c83a9cb3123c2" target="_blank" rel="noopener noreferrer" class="block w-full bg-amber-600 text-white text-xs py-2 px-3 tracking-wider hover:bg-amber-700 transition-colors text-center">在 Bilibili 观看 ↗</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  `
+          : "";
+
+        document.getElementById("cuisine-detail-content").innerHTML = `
+    <!-- 封面 -->
+    <div class="relative h-64 md:h-96 overflow-hidden">
+      <img src="${d.coverImg}" alt="${d.name}" class="w-full h-full object-cover" onerror="this.parentElement.style.background='linear-gradient(135deg,#1a0800,#3d1a0a)'">
+      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+      <div class="absolute bottom-0 left-0 p-8 md:p-12">
+        <button onclick="backToRegionsList()" class="text-white/70 text-xs tracking-widest hover:text-gold transition-colors mb-4 flex items-center gap-2">
+          ← 返回地区美食
+        </button>
+        <div class="text-xs tracking-[0.3em] text-white/60 mb-2">${d.en}</div>
+        <h1 class="font-serif text-4xl md:text-6xl font-bold text-white">${d.name}</h1>
+        <p class="text-white/70 mt-2 font-sans">${d.region}</p>
+      </div>
+    </div>
+
+    <!-- 介绍 -->
+    <section class="bg-white py-12">
+      <div class="max-w-4xl mx-auto px-4 md:px-8">
+        <div class="flex items-start gap-6">
+          <div class="hidden md:block w-1 self-stretch bg-vermilion flex-shrink-0"></div>
+          <div>
+            <p class="text-gold text-xs tracking-[0.3em] uppercase mb-3 font-sans">菜系介绍</p>
+            <p class="text-inkblack/75 leading-loose text-base font-sans">${d.desc}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 菜肴与食谱 -->
+    <section class="bg-mist py-14">
+      <div class="max-w-6xl mx-auto px-4 md:px-6">
+        <div class="mb-10">
+          <p class="text-vermilion text-xs tracking-[0.3em] uppercase mb-2">经典菜肴 · 详细食谱</p>
+          <h2 class="font-serif text-3xl font-bold">代表菜与制作方法</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">${dishesHtml}</div>
+      </div>
+    </section>
+
+    ${shundeSection}
+  `;
+
+        document.getElementById("regions-list-view").classList.add("hidden");
+        document
+          .getElementById("cuisine-detail-view")
+          .classList.remove("hidden");
+        window.scrollTo({ top: 0 });
+      }
+
+      // ===================================================
+      // 5d. 顺德专页渲染函数
+      // ===================================================
+      function renderShundePage() {
+        const d = cuisineData.shunde;
+        const dishesHtml = d.dishes
+          .map(
+            (dish) => `
+    <div class="bg-white border border-stone-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+      <div class="relative h-44 overflow-hidden">
+        <img src="${dish.img}" alt="${dish.name}" class="w-full h-full object-cover" onerror="this.parentElement.style.background='linear-gradient(135deg,#fef3c7,#fde68a)';this.style.display='none'">
+      </div>
+      <div class="p-5">
+        <h4 class="font-serif text-lg font-bold mb-2">${dish.name}</h4>
+        <p class="text-inkblack/60 text-sm leading-relaxed mb-3">${dish.desc}</p>
+        <div class="flex flex-wrap gap-1.5 mb-4">${dish.tags.map((t) => `<span class="bg-amber-50 text-amber-700 text-xs px-2 py-0.5">${t}</span>`).join("")}</div>
+        <div class="border-t border-stone-100 pt-4">
+          <div class="text-xs tracking-widest text-inkblack/40 mb-3">制作步骤</div>
+          ${dish.recipe.map((step, i) => `<div class="flex gap-3 items-start mb-2"><div class="step-num flex-shrink-0">${i + 1}</div><p class="text-xs text-inkblack/60 leading-relaxed">${step}</p></div>`).join("")}
+        </div>
+      </div>
+    </div>`,
+          )
+          .join("");
+
+        document.getElementById("cuisine-detail-content").innerHTML = `
+    <div class="relative h-64 md:h-80 overflow-hidden">
+      <img src="https://images.unsplash.com/photo-1559329007-40df8a9345d8?w=1200&q=85" alt="顺德美食" class="w-full h-full object-cover" onerror="this.parentElement.style.background='linear-gradient(135deg,#78350f,#d97706)'">
+      <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent"></div>
+      <div class="absolute bottom-0 left-0 p-8">
+        <button onclick="showCuisineDetail('cantonese')" class="text-white/70 text-xs tracking-widest hover:text-gold transition-colors mb-4 flex items-center gap-2">← 返回粤菜</button>
+        <div class="text-xs tracking-[0.3em] text-amber-400 mb-2">SHUNDE · WORLD CITY OF GASTRONOMY</div>
+        <h1 class="font-serif text-4xl md:text-5xl font-bold text-white">顺德美食</h1>
+        <p class="text-white/70 mt-2">广东佛山顺德区 · 世界美食之都 · 中国厨师之乡</p>
+      </div>
+    </div>
+    <section class="bg-white py-12">
+      <div class="max-w-4xl mx-auto px-4 md:px-8">
+        <div class="flex items-start gap-6">
+          <div class="hidden md:block w-1 self-stretch bg-amber-500 flex-shrink-0"></div>
+          <div>
+            <p class="text-amber-600 text-xs tracking-[0.3em] uppercase mb-3">顺德 · 凤城</p>
+            <p class="text-inkblack/75 leading-loose text-base">顺德，古称凤城，地处珠三角腹地，拥有五百余年饮食文化积淀。"食在广东，厨出凤城"，顺德厨师自明清起便以精湛厨艺誉满岭南，走向全国乃至世界。2014年，联合国教科文组织正式将顺德列为"世界美食之都"，这是中国城市第一次获得这一殊荣。顺德菜以珠江三角洲河鲜为主要食材，以极致刀工、创新精神和对食材本味的尊重著称，形成了双皮奶、鱼生、伦教糕等举世闻名的饮食瑰宝。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="bg-inkblack text-white py-14">
+      <div class="max-w-5xl mx-auto px-4 md:px-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+          <div>
+            <p class="text-amber-400 text-xs tracking-[0.3em] uppercase mb-3">纪录片推荐</p>
+            <h2 class="font-serif text-3xl md:text-4xl font-bold mb-4">《寻味顺德》</h2>
+            <p class="text-white/60 text-sm leading-relaxed mb-4">由广东广播电视台出品的美食人文纪录片，以顺德"世界美食之都"为舞台，深入走访当地普通家庭、街头小店与高档食府，追溯每道顺德名菜背后的历史渊源、人情故事与文化传承。</p>
+            <p class="text-white/60 text-sm leading-relaxed mb-6">镜头跟随烹饪者的双手，记录双皮奶的两层奶皮如何在蒸汽中成形，鱼生的刀工如何在师傅手中化为薄如蝉翼的透明鱼片……食物不只是食物，是一座城市的记忆与灵魂。</p>
+            <div class="flex flex-col sm:flex-row gap-3">
+              <a href="https://www.bilibili.com/video/BV1WV411G7s3/?spm_id_from=333.337.search-card.all.click&vd_source=8e9231a281a9df5a9a1c83a9cb3123c2" target="_blank" rel="noopener noreferrer" class="bg-amber-500 text-inkblack px-5 py-3 text-sm tracking-widest hover:bg-amber-400 transition-colors text-center">在 Bilibili 观看 ↗</a>
+              <a href="https://www.youtube.com/results?search_query=%E5%AF%BB%E5%91%B3%E9%A1%BA%E5%BE%B7" target="_blank" rel="noopener noreferrer" class="border border-white/30 text-white/70 px-5 py-3 text-sm tracking-widest hover:border-gold hover:text-gold transition-colors text-center">在 YouTube 搜索 ↗</a>
+            </div>
+          </div>
+          <div class="relative">
+            <div class="relative overflow-hidden aspect-video bg-stone-900 border border-white/10">
+              <img src="https://images.unsplash.com/photo-1559329007-40df8a9345d8?w=800&q=80" alt="寻味顺德" class="w-full h-full object-cover opacity-50" onerror="this.style.display='none'">
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <a href="https://www.bilibili.com/video/BV1WV411G7s3/?spm_id_from=333.337.search-card.all.click&vd_source=8e9231a281a9df5a9a1c83a9cb3123c2" target="_blank" rel="noopener noreferrer" class="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center hover:bg-amber-400 transition-colors mb-3">
+                  <svg class="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </a>
+                <span class="text-white/80 text-sm">点击播放《寻味顺德》</span>
+              </div>
+            </div>
+            <div class="mt-3 flex justify-between text-xs text-white/40"><span>广东广播电视台 出品</span><span>美食人文纪录片</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="bg-mist py-14">
+      <div class="max-w-6xl mx-auto px-4 md:px-6">
+        <div class="mb-10">
+          <p class="text-vermilion text-xs tracking-[0.3em] uppercase mb-2">顺德经典 · 详细食谱</p>
+          <h2 class="font-serif text-3xl font-bold">代表菜肴与制作方法</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">${dishesHtml}</div>
+      </div>
+    </section>
+    <section class="bg-white py-10">
+      <div class="max-w-6xl mx-auto px-4 md:px-6">
+        <div class="text-xs text-inkblack/40 tracking-widest mb-4">顺德更多美食</div>
+        <div class="flex flex-wrap gap-2">
+          ${["均安蒸猪", "陈村粉", "桑拿鱼", "拆鱼粥", "顺德牛乳", "炒牛奶", "清蒸滑鸡", "猪脚姜", "顺德糖水", "香滑马蹄糕"].map((n) => `<span class="bg-amber-50 border border-amber-200 text-amber-800 text-xs px-3 py-1">${n}</span>`).join("")}
+        </div>
+      </div>
+    </section>
+  `;
+        document.getElementById("regions-list-view").classList.add("hidden");
+        document
+          .getElementById("cuisine-detail-view")
+          .classList.remove("hidden");
+        window.scrollTo({ top: 0 });
+      }
+
+      // ===================================================
+      // 5c. 顺德专页入口 & 导航辅助函数
+      // ===================================================
+      function backToRegionsList() {
+        document.getElementById("cuisine-detail-view").classList.add("hidden");
+        document.getElementById("regions-list-view").classList.remove("hidden");
+        window.scrollTo({ top: 0 });
+      }
+
+      function showCuisineDetail2(key) {
+        // 从顺德页返回粤菜详情
+        showCuisineDetail(key);
+      }
+
+      // ===================================================
+      // 6. 菜谱数据
+      // ===================================================
+      const recipesData = {
+        mapo: {
+          name: "麻婆豆腐",
+          region: "川菜 · 四川",
+          emoji: "🫕",
+          time: "30分钟",
+          serves: "2-3人份",
+          difficulty: "中等",
+          desc: "麻婆豆腐是四川传统名菜，以豆腐为主料，配以豆瓣酱、花椒等调料烹制而成，麻、辣、鲜、香俱全，是家常川菜的代表作。",
+          ingredients: [
+            "嫩豆腐 500g",
+            "猪肉末 100g",
+            "郫县豆瓣酱 2汤匙",
+            "花椒粉 1茶匙",
+            "辣椒粉 1茶匙",
+            "蒜末 3瓣",
+            "姜末 适量",
+            "葱花 适量",
+            "生抽 1汤匙",
+            "淀粉 2茶匙",
+            "食用油 适量",
+            "盐 适量",
+          ],
+          steps: [
+            "豆腐切2cm见方小块，放入淡盐水中浸泡5分钟，沥干备用。",
+            "热锅冷油，下肉末炒散至变色，加入郫县豆瓣酱、蒜末、姜末，小火炒出红油和香味。",
+            "加入约300ml开水，放入豆腐块轻轻推匀，加生抽、盐调味。",
+            "中火煮3-5分钟，豆腐入味后勾入水淀粉，翻拌至汤汁收浓。",
+            "出锅前撒花椒粉、辣椒粉，大火翻炒均匀，盛出撒葱花即可。",
+          ],
+        },
+        duck: {
+          name: "北京烤鸭",
+          region: "北京菜系",
+          emoji: "🦆",
+          time: "约3小时",
+          serves: "4-6人份",
+          difficulty: "较难",
+          desc: "北京烤鸭是北京最具代表性的传统名菜，以其皮脆肉嫩、色泽红艳著称，已有600余年历史，是中华美食的代表之作。",
+          ingredients: [
+            "北京鸭 1只（约2.5kg）",
+            "麦芽糖 3汤匙",
+            "白醋 1汤匙",
+            "五香粉 少许",
+            "甜面酱 适量",
+            "葱段 适量",
+            "黄瓜条 适量",
+            "荷叶饼 12张",
+          ],
+          steps: [
+            "鸭子处理干净，内腔用五香粉、盐抹匀腌制30分钟。向鸭腔内充气使皮与肉分离。",
+            "麦芽糖加白醋、水调成上色水，反复浇淋鸭身均匀上色。",
+            "挂于通风处阴干4-6小时，直至表皮触感干燥。",
+            "烤箱预热230°C，烤约20分钟至表皮金黄，转200°C续烤40-50分钟。",
+            "取出静置10分钟，片下皮和肉，配葱段、黄瓜条、甜面酱和荷叶饼上桌。",
+          ],
+        },
+        fish: {
+          name: "西湖醋鱼",
+          region: "浙菜 · 杭州",
+          emoji: "🐟",
+          time: "40分钟",
+          serves: "2-3人份",
+          difficulty: "较易",
+          desc: "西湖醋鱼是杭州传统名菜，以草鱼为主料，配以香醋、糖等调制成酸甜汁，鱼肉鲜嫩，酸甜适口，是浙菜的代表之作。",
+          ingredients: [
+            "草鱼 1条（约1kg）",
+            "香醋 4汤匙",
+            "白糖 3汤匙",
+            "生抽 2汤匙",
+            "姜末 适量",
+            "葱段 适量",
+            "淀粉 2汤匙",
+            "盐 少许",
+          ],
+          steps: [
+            "草鱼从背部剖开洗净，鱼身划斜刀，用少量盐、姜末腌制15分钟。",
+            "沸水加葱段、姜片，将鱼片煮熟约8-10分钟，取出摆盘备用。",
+            "另起锅加少量鱼汤，放入白糖、香醋、生抽调匀加热至糖溶化。",
+            "水淀粉勾芡，炒至酱汁浓稠有光泽感，撒姜末提鲜。",
+            "将酸甜汁均匀浇在鱼身上，撒葱花装饰，趁热上桌。",
+          ],
+        },
+        dongpo: {
+          name: "东坡肉",
+          region: "浙菜 · 杭州",
+          emoji: "🥩",
+          time: "约2小时",
+          serves: "3-4人份",
+          difficulty: "中等难度",
+          desc: "东坡肉因北宋文学家苏东坡而得名，以五花肉为主料，经红烧后肥而不腻、软糯入味，是浙菜中最具代表性的经典名菜。",
+          ingredients: [
+            "带皮五花肉 500g",
+            "黄酒（绍兴花雕）200ml",
+            "老抽 2汤匙",
+            "生抽 1汤匙",
+            "冰糖 30g",
+            "葱结 2个",
+            "姜片 4片",
+            "八角 1个",
+          ],
+          steps: [
+            "五花肉整块冷水下锅，加姜葱焯水5分钟，捞出切5cm见方块。",
+            "每块肉肉皮朝下放入砂锅，加葱姜铺底。",
+            "倒入黄酒、老抽、生抽，加冰糖，补水至与肉齐平，大火烧开。",
+            "转最小火，盖锅焖煮90分钟，期间翻面一次使肉均匀上色入味。",
+            "开盖大火收汁至浓稠，肉翻转肉皮朝上装碗，浇上汤汁即可。",
+          ],
+        },
+        shrimp: {
+          name: "白灼虾",
+          region: "粤菜 · 广东",
+          emoji: "🍤",
+          time: "15分钟",
+          serves: "2-3人份",
+          difficulty: "较易",
+          desc: '白灼虾是粤菜中最能体现"原汁原味"理念的菜肴，虾肉鲜甜弹牙，配以姜蓉酱油，是粤菜清淡风格的完美诠释。',
+          ingredients: [
+            "鲜活基围虾 500g",
+            "姜片 3片",
+            "葱段 2根",
+            "料酒 1汤匙",
+            "生抽 2汤匙（蘸料）",
+            "姜蓉 适量",
+            "小米辣 少许（可选）",
+          ],
+          steps: [
+            "虾剪去虾须，用牙签挑出背部虾线，洗净备用。",
+            "调制蘸料：生抽加入热油爆香的姜蓉、小米辣，搅匀备用。",
+            "锅中加水煮沸，放入姜片、葱段、料酒，水再次沸腾时下虾。",
+            "大火煮约90秒至虾身完全变红、虾壳翘起，立即捞出。",
+            "迅速过冰水使肉质更弹，装盘配蘸料上桌。",
+          ],
+        },
+        dumplings: {
+          name: "猪肉白菜饺子",
+          region: "北方传统",
+          emoji: "🥟",
+          time: "约90分钟",
+          serves: "4-5人份",
+          difficulty: "中等难度",
+          desc: "饺子是中国北方最具代表性的传统食品，尤其在春节等重要节日不可缺少。猪肉白菜馅鲜嫩多汁，是最受欢迎的经典馅料。",
+          ingredients: [
+            "中筋面粉 300g",
+            "温水 150ml",
+            "猪前腿肉末 250g",
+            "大白菜 300g",
+            "姜末 适量",
+            "葱末 适量",
+            "生抽 1汤匙",
+            "老抽 半汤匙",
+            "香油 1茶匙",
+            "盐 适量",
+            "白胡椒粉 少许",
+          ],
+          steps: [
+            "面粉加温水揉成光滑面团，盖湿布醒发30分钟。白菜切碎加盐腌10分钟，挤干水分。",
+            "肉末加盐、生抽、老抽、白胡椒粉，顺同一方向搅打上劲至起胶。加姜末、葱末混合均匀。",
+            "加入挤干水分的白菜碎，淋入香油拌匀即成饺子馅，放入冰箱冷藏备用。",
+            "醒好面团搓长条，切小剂子，擀成中间稍厚、边缘薄的圆皮。",
+            "取馅料放于皮中央，对折捏紧，捏出褶纹密封，下入沸水中，水开后加两次冷水，饺子浮起即可捞出。",
+          ],
+        },
+      };
+
+      // 菜谱搜索
+      function searchRecipes() {
+        const query = document
+          .getElementById("searchInput")
+          .value.trim()
+          .toLowerCase();
+        const cards = document.querySelectorAll(".recipe-card");
+        let visible = 0;
+        cards.forEach((card) => {
+          const name = card.querySelector("h3").textContent.toLowerCase();
+          const region = card.querySelector(".text-vermilion")
+            ? card.querySelector(".text-vermilion").textContent.toLowerCase()
+            : "";
+          const desc = card.querySelector("p")
+            ? card.querySelector("p").textContent.toLowerCase()
+            : "";
+          const match =
+            name.includes(query) ||
+            region.includes(query) ||
+            desc.includes(query);
+          card.style.display = match ? "" : "none";
+          if (match) visible++;
+        });
+        document
+          .getElementById("noResults")
+          .classList.toggle("hidden", visible > 0);
+      }
+
+      // 菜谱弹窗
+      function openModal(key) {
+        const r = recipesData[key];
+        if (!r) return;
+        const stepsHtml = r.steps
+          .map(
+            (s, i) =>
+              `<div class="flex gap-3 items-start mb-4"><div class="step-num">${i + 1}</div><p class="text-sm text-inkblack/70 leading-relaxed">${s}</p></div>`,
+          )
+          .join("");
+        const ingrHtml = r.ingredients
+          .map(
+            (ing) =>
+              `<span class="bg-stone-100 text-inkblack/70 text-xs px-2 py-1">${ing}</span>`,
+          )
+          .join("");
+        document.getElementById("modalInner").innerHTML = `
+    <div class="bg-gradient-to-br from-stone-800 to-stone-600 p-8 text-white flex items-center justify-between">
+      <div>
+        <div class="text-xs tracking-widest text-white/60 mb-1">${r.region}</div>
+        <h2 class="font-serif text-3xl font-bold">${r.name}</h2>
+        <div class="flex gap-4 mt-3 text-xs text-white/60"><span>⏱ ${r.time}</span><span>👥 ${r.serves}</span><span>📊 ${r.difficulty}</span></div>
+      </div>
+      <span class="text-6xl hidden sm:block">${r.emoji}</span>
+    </div>
+    <div class="p-6">
+      <p class="text-sm text-inkblack/70 leading-relaxed mb-6">${r.desc}</p>
+      <div class="mb-6"><h3 class="font-serif text-lg font-bold mb-3">食材清单</h3><div class="flex flex-wrap gap-2">${ingrHtml}</div></div>
+      <div><h3 class="font-serif text-lg font-bold mb-4">烹饪步骤</h3>${stepsHtml}</div>
+      <button onclick="closeModal()" class="mt-4 w-full border border-stone-200 py-2 text-sm text-inkblack/60 hover:bg-stone-50 transition-colors">关闭</button>
+    </div>`;
+        document.getElementById("recipeModal").classList.add("open");
+        document.body.style.overflow = "hidden";
+      }
+      function closeModal() {
+        document.getElementById("recipeModal").classList.remove("open");
+        document.body.style.overflow = "";
+      }
+      function closeModalOutside(e) {
+        if (e.target === document.getElementById("recipeModal")) closeModal();
+      }
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeModal();
+      });
+
+      // ===================================================
+      // 7. 表单验证
+      // ===================================================
+      let currentRating = 0;
+
+      function setRating(val) {
+        currentRating = val;
+        document.querySelectorAll(".rating-star").forEach((s, i) => {
+          s.textContent = i < val ? "★" : "☆";
+          s.style.color = i < val ? "#D4A843" : "#9ca3af";
+        });
+      }
+      function updateCounter() {
+        const el = document.getElementById("content");
+        const counter = document.getElementById("charCounter");
+        if (!el || !counter) return;
+        const len = el.value.length;
+        counter.textContent = `${len} / 300`;
+        counter.className =
+          "char-counter ml-auto" +
+          (len > 270 ? " warn" : "") +
+          (len >= 300 ? " over" : "");
+      }
+      function showError(fid, eid, show) {
+        const f = document.getElementById(fid),
+          e = document.getElementById(eid);
+        if (!f || !e) return;
+        f.classList.toggle("error", show);
+        e.classList.toggle("show", show);
+      }
+      function isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      }
+      function escapeHtml(str) {
+        const d = document.createElement("div");
+        d.appendChild(document.createTextNode(str));
+        return d.innerHTML;
+      }
+
+      // 输入时实时清除错误
+      ["nickname", "email", "content"].forEach((id) => {
+        const errMap = {
+          nickname: "nicknameErr",
+          email: "emailErr",
+          content: "contentErr",
+        };
+        document.getElementById(id).addEventListener("input", () => {
+          if (document.getElementById(id).value.trim())
+            showError(id, errMap[id], false);
+        });
+      });
+
+      // ===================================================
+      // 7b. localStorage 留言持久化
+      // ===================================================
+      const STORAGE_KEY = "shizaizhongguo_messages";
+
+      function saveMessages() {
+        // 只保存用户提交的留言（跳过预设的示例留言）
+        const cards = document.querySelectorAll("#messagesList .msg-card.user-msg");
+        const messages = [];
+        cards.forEach((card) => {
+          messages.push({
+            nickname: card.dataset.nickname || "",
+            email: card.dataset.email || "",
+            cuisine: card.dataset.cuisine || "",
+            rating: parseInt(card.dataset.rating) || 5,
+            content: card.dataset.content || "",
+            date: card.dataset.date || "",
+          });
+        });
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+        } catch (e) {
+          // localStorage 已满或不可用，静默处理
+        }
+      }
+
+      function loadMessages() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return;
+          const messages = JSON.parse(raw);
+          if (!Array.isArray(messages)) return;
+          const list = document.getElementById("messagesList");
+          // 移除之前加载的用户留言（保留预设的示例留言）
+          list.querySelectorAll(".msg-card.user-msg").forEach((el) => el.remove());
+          // 倒序渲染，最新的在最上面
+          messages.reverse().forEach((m) => {
+            const card = createMessageCard(
+              m.nickname,
+              m.email,
+              m.cuisine,
+              m.rating,
+              m.content,
+              m.date,
+            );
+            list.insertBefore(card, list.firstChild);
+          });
+        } catch (e) {
+          // 数据损坏，静默处理
+        }
+      }
+
+      function createMessageCard(nickname, email, cuisine, rating, content, date) {
+        const stars =
+          rating > 0
+            ? "★".repeat(rating) + "☆".repeat(5 - rating)
+            : "★★★★★";
+        const cuisineLabel = cuisine ? `${escapeHtml(cuisine)}爱好者` : "美食爱好者";
+
+        const card = document.createElement("div");
+        card.className = "msg-card user-msg bg-white border border-vermilion p-5";
+        card.dataset.nickname = nickname;
+        card.dataset.email = email;
+        card.dataset.cuisine = cuisine;
+        card.dataset.rating = rating;
+        card.dataset.content = content;
+        card.dataset.date = date;
+
+        card.innerHTML = `
+    <div class="flex justify-between items-start mb-2">
+      <div>
+        <span class="font-medium text-sm">${escapeHtml(nickname)}</span>
+        <span class="text-xs text-inkblack/40 ml-2">${escapeHtml(email)}</span>
+      </div>
+      <div class="text-gold text-sm">${stars}</div>
+    </div>
+    <div class="text-xs text-inkblack/30 mb-2">
+      <span class="inline-block bg-mist px-2 py-0.5">🍽 ${cuisineLabel}</span>
+    </div>
+    <p class="text-inkblack/70 text-sm leading-relaxed">${escapeHtml(content)}</p>
+    <div class="text-xs text-inkblack/30 mt-2">${date}</div>`;
+
+        return card;
+      }
+
+      // 页面加载时恢复留言
+      loadMessages();
+
+      function submitForm() {
+        let valid = true;
+        const nickname = document.getElementById("nickname").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const content = document.getElementById("content").value.trim();
+
+        if (nickname.length < 2 || nickname.length > 20) {
+          showError("nickname", "nicknameErr", true);
+          valid = false;
+        } else {
+          showError("nickname", "nicknameErr", false);
+        }
+        if (!isValidEmail(email)) {
+          showError("email", "emailErr", true);
+          valid = false;
+        } else {
+          showError("email", "emailErr", false);
+        }
+        if (content.length < 10 || content.length > 300) {
+          showError("content", "contentErr", true);
+          valid = false;
+        } else {
+          showError("content", "contentErr", false);
+        }
+        if (!valid) return;
+
+        const cuisine = document.getElementById("cuisine").value || "美食";
+        const today = new Date().toLocaleDateString("zh-CN");
+
+        const card = createMessageCard(
+          nickname,
+          email,
+          cuisine,
+          currentRating,
+          content,
+          today,
+        );
+
+        const list = document.getElementById("messagesList");
+        list.insertBefore(card, list.firstChild);
+
+        // 持久化保存
+        saveMessages();
+
+        // 重置
+        ["nickname", "email", "content"].forEach(
+          (id) => (document.getElementById(id).value = ""),
+        );
+        document.getElementById("cuisine").selectedIndex = 0;
+        setRating(0);
+        updateCounter();
+
+        const msg = document.getElementById("successMsg");
+        msg.classList.remove("hidden");
+        setTimeout(() => msg.classList.add("hidden"), 4000);
+        list.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    </script>
+  </body>
+</html>
