@@ -1820,7 +1820,18 @@
               </div>
             </div>
             <div>
-              <h2 class="font-serif text-2xl font-bold mb-6">食客留言</h2>
+              <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+                <h2 class="font-serif text-2xl font-bold">食客留言</h2>
+                <div class="flex items-center gap-2">
+                  <span id="syncStatus" class="text-xs text-inkblack/40 flex items-center gap-1" title="留言存储状态">
+                    <span class="w-2 h-2 rounded-full bg-gray-300 inline-block"></span> 加载中…
+                  </span>
+                  <button onclick="requestFileAccess()" id="btnFileAccess" class="hidden border border-stone-300 text-xs text-inkblack/60 px-3 py-1.5 tracking-wider hover:bg-stone-50 transition-colors" title="选择 messages.json 文件以启用本地文件存储">🔗 绑定本地文件</button>
+                  <button onclick="exportMessages()" class="border border-stone-300 text-xs text-inkblack/40 px-2 py-1 tracking-wider hover:bg-stone-50 transition-colors hidden" id="btnExport" title="手动导出备份">📥 备份</button>
+                  <button onclick="importMessages()" class="border border-stone-300 text-xs text-inkblack/40 px-2 py-1 tracking-wider hover:bg-stone-50 transition-colors hidden" id="btnImport" title="从备份文件导入">📤 恢复</button>
+                </div>
+              </div>
+              <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(event)">
               <div id="messagesList" class="space-y-4">
                 <div class="msg-card bg-white border border-stone-100 p-5">
                   <div class="flex justify-between items-start mb-2">
@@ -2938,12 +2949,85 @@
       });
 
       // ===================================================
-      // 7b. localStorage 留言持久化
+      // 7b. 文件持久化（messages.json）— 跨浏览器共享
       // ===================================================
+      // 优先级：IndexedDB 文件句柄 > fetch 本地文件 > localStorage 回退
       const STORAGE_KEY = "shizaizhongguo_messages";
+      const IDB_NAME = "shizaizhongguo_fs";
+      const IDB_STORE = "handles";
+      let fileHandle = null;           // FileSystemFileHandle，用于读写 messages.json
 
-      function saveMessages() {
-        // 只保存用户提交的留言（跳过预设的示例留言）
+      // ---- IndexedDB 存取文件句柄 ----
+      function openIdb() {
+        return new Promise((resolve, reject) => {
+          const req = indexedDB.open(IDB_NAME, 1);
+          req.onupgradeneeded = () => { req.result.createObjectStore(IDB_STORE); };
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      async function saveHandleToIdb(handle) {
+        try {
+          const db = await openIdb();
+          const tx = db.transaction(IDB_STORE, "readwrite");
+          tx.objectStore(IDB_STORE).put(handle, "messagesJson");
+          await new Promise((resolve, reject) => { tx.oncomplete = resolve; tx.onerror = reject; });
+          db.close();
+        } catch (e) { /* 静默 */ }
+      }
+
+      async function loadHandleFromIdb() {
+        try {
+          const db = await openIdb();
+          const tx = db.transaction(IDB_STORE, "readonly");
+          const handle = await new Promise((resolve, reject) => {
+            const req = tx.objectStore(IDB_STORE).get("messagesJson");
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+          });
+          db.close();
+          return handle || null;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      // ---- 从文件读取留言 ----
+      async function readMessagesFromHandle(handle) {
+        try {
+          // 验证权限
+          const opts = { mode: "read" };
+          if ((await handle.queryPermission(opts)) !== "granted") {
+            if ((await handle.requestPermission(opts)) !== "granted") return null;
+          }
+          const file = await handle.getFile();
+          const text = await file.text();
+          const data = JSON.parse(text);
+          return Array.isArray(data) ? data : null;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      // ---- 写入留言到文件 ----
+      async function writeMessagesToHandle(handle, messages) {
+        try {
+          const opts = { mode: "readwrite" };
+          if ((await handle.queryPermission(opts)) !== "granted") {
+            if ((await handle.requestPermission(opts)) !== "granted") return false;
+          }
+          const writable = await handle.createWritable();
+          await writable.write(JSON.stringify(messages, null, 2));
+          await writable.close();
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      // ---- 收集用户留言 ----
+      function collectUserMessages() {
         const cards = document.querySelectorAll("#messagesList .msg-card.user-msg");
         const messages = [];
         cards.forEach((card) => {
@@ -2956,39 +3040,26 @@
             date: card.dataset.date || "",
           });
         });
+        return messages;
+      }
+
+      // ---- 同步保存（文件 + localStorage 双保险） ----
+      async function saveMessages() {
+        const messages = collectUserMessages();
+
+        // 1) 写入文件（如果有句柄）
+        if (fileHandle) {
+          const ok = await writeMessagesToHandle(fileHandle, messages);
+          updateSyncStatus(ok ? "file" : "local");
+        }
+
+        // 2) localStorage 兜底
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-        } catch (e) {
-          // localStorage 已满或不可用，静默处理
-        }
+        } catch (e) { /* ignore */ }
       }
 
-      function loadMessages() {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (!raw) return;
-          const messages = JSON.parse(raw);
-          if (!Array.isArray(messages)) return;
-          const list = document.getElementById("messagesList");
-          // 移除之前加载的用户留言（保留预设的示例留言）
-          list.querySelectorAll(".msg-card.user-msg").forEach((el) => el.remove());
-          // 倒序渲染，最新的在最上面
-          messages.reverse().forEach((m) => {
-            const card = createMessageCard(
-              m.nickname,
-              m.email,
-              m.cuisine,
-              m.rating,
-              m.content,
-              m.date,
-            );
-            list.insertBefore(card, list.firstChild);
-          });
-        } catch (e) {
-          // 数据损坏，静默处理
-        }
-      }
-
+      // ---- 渲染留言卡片 ----
       function createMessageCard(nickname, email, cuisine, rating, content, date) {
         const stars =
           rating > 0
@@ -3020,6 +3091,212 @@
     <div class="text-xs text-inkblack/30 mt-2">${date}</div>`;
 
         return card;
+      }
+
+      function renderUserMessages(messages) {
+        const list = document.getElementById("messagesList");
+        list.querySelectorAll(".msg-card.user-msg").forEach((el) => el.remove());
+        if (!messages || messages.length === 0) return;
+        // messages 已按时间正序（旧→新），倒序渲染使最新在上
+        [...messages].reverse().forEach((m) => {
+          const card = createMessageCard(
+            m.nickname, m.email, m.cuisine, m.rating, m.content, m.date,
+          );
+          list.insertBefore(card, list.firstChild);
+        });
+      }
+
+      // ---- 同步状态指示 ----
+      function updateSyncStatus(state) {
+        const el = document.getElementById("syncStatus");
+        if (!el) return;
+        if (state === "file") {
+          el.innerHTML = '<span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span> 文件同步';
+          el.className = "text-xs text-green-600 flex items-center gap-1";
+          document.getElementById("btnFileAccess").classList.add("hidden");
+        } else if (state === "local") {
+          el.innerHTML = '<span class="w-2 h-2 rounded-full bg-yellow-500 inline-block"></span> 浏览器存储';
+          el.className = "text-xs text-yellow-600 flex items-center gap-1";
+          document.getElementById("btnFileAccess").classList.remove("hidden");
+        } else {
+          el.innerHTML = '<span class="w-2 h-2 rounded-full bg-gray-300 inline-block"></span> 无存储';
+          el.className = "text-xs text-inkblack/40 flex items-center gap-1";
+          document.getElementById("btnFileAccess").classList.remove("hidden");
+        }
+      }
+
+      // ---- 绑定本地 messages.json ----
+      async function requestFileAccess() {
+        if (!window.showOpenFilePicker) {
+          alert("当前浏览器不支持文件系统访问。\n请使用 Chrome 或 Edge 浏览器，或使用下方的备份/恢复功能。");
+          document.getElementById("btnExport").classList.remove("hidden");
+          document.getElementById("btnImport").classList.remove("hidden");
+          return;
+        }
+        try {
+          const [handle] = await window.showOpenFilePicker({
+            types: [{ description: "JSON 文件", accept: { "application/json": [".json"] } }],
+            multiple: false,
+          });
+          // 验证文件是 messages.json
+          const f = await handle.getFile();
+          const data = JSON.parse(await f.text());
+          if (!Array.isArray(data)) throw new Error("格式错误");
+
+          fileHandle = handle;
+          await saveHandleToIdb(handle);
+
+          // 加载文件中的留言
+          renderUserMessages(data);
+          // 同步到 localStorage
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+          updateSyncStatus("file");
+          alert("✓ 已成功绑定 messages.json！\n今后所有留言将自动保存到此文件，不同浏览器共享同一份数据。\n使用 git commit && git push 即可同步到 GitHub。");
+        } catch (e) {
+          if (e.name !== "AbortError") {
+            alert("绑定失败，请选择项目目录下的 messages.json 文件。");
+          }
+        }
+      }
+
+      // ---- 页面初始化：加载留言 ----
+      async function loadMessages() {
+        // 1) 尝试从 IndexedDB 获取已保存的文件句柄
+        const handle = await loadHandleFromIdb();
+        if (handle) {
+          const messages = await readMessagesFromHandle(handle);
+          if (messages !== null) {
+            fileHandle = handle;
+            renderUserMessages(messages);
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(messages)); } catch (e) {}
+            updateSyncStatus("file");
+            return;
+          }
+          // 句柄失效（文件被移动/删除），清除
+          fileHandle = null;
+        }
+
+        // 2) 尝试 fetch 本地 messages.json（同目录下）
+        try {
+          const resp = await fetch("./messages.json", { cache: "no-cache" });
+          if (resp.ok) {
+            const data = await resp.json();
+            if (Array.isArray(data) && data.length > 0) {
+              renderUserMessages(data);
+              try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+              updateSyncStatus("local");
+              // 提示用户绑定文件以获得写入能力
+              document.getElementById("btnFileAccess").classList.remove("hidden");
+              return;
+            }
+          }
+        } catch (e) { /* fetch 失败，继续回退 */ }
+
+        // 3) localStorage 回退
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const messages = JSON.parse(raw);
+            if (Array.isArray(messages) && messages.length > 0) {
+              renderUserMessages(messages);
+              updateSyncStatus("local");
+              return;
+            }
+          }
+        } catch (e) { /* ignore */ }
+
+        // 4) 无任何数据
+        updateSyncStatus("none");
+        document.getElementById("btnFileAccess").classList.remove("hidden");
+      }
+
+      // ===================================================
+      // 7c. 导出 / 导入（手动备份，兜底方案）
+      // ===================================================
+
+      function exportMessages() {
+        const messages = collectUserMessages();
+        const data = JSON.stringify(messages, null, 2);
+        const blob = new Blob([data], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        if (messages.length === 0) {
+          alert("暂无用户留言可导出。预设示例留言已包含在页面中，无需导出。");
+          return;
+        }
+
+        if (window.showSaveFilePicker) {
+          const today = new Date().toISOString().slice(0, 10);
+          window.showSaveFilePicker({
+            suggestedName: `食在中国-留言备份-${today}.json`,
+            types: [{ description: "JSON 文件", accept: { "application/json": [".json"] } }],
+          }).then(async (h) => {
+            const w = await h.createWritable();
+            await w.write(data);
+            await w.close();
+            alert(`✓ 已导出 ${messages.length} 条留言！`);
+          }).catch((err) => {
+            if (err.name !== "AbortError") fallbackDownload(url);
+          });
+        } else {
+          fallbackDownload(url);
+        }
+
+        function fallbackDownload(u) {
+          const a = document.createElement("a");
+          a.href = u;
+          a.download = `食在中国-留言备份-${new Date().toISOString().slice(0, 10)}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(() => URL.revokeObjectURL(u), 1000);
+        }
+      }
+
+      function importMessages() {
+        if (window.showOpenFilePicker) {
+          window.showOpenFilePicker({
+            types: [{ description: "JSON 文件", accept: { "application/json": [".json"] } }],
+            multiple: false,
+          }).then(async ([h]) => {
+            const f = await h.getFile();
+            processImportData(await f.text(), f.name);
+          }).catch((err) => {
+            if (err.name !== "AbortError") document.getElementById("importFileInput").click();
+          });
+        } else {
+          document.getElementById("importFileInput").click();
+        }
+      }
+
+      function handleImportFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (e) { processImportData(e.target.result, file.name); };
+        reader.readAsText(file);
+        event.target.value = "";
+      }
+
+      function processImportData(text, filename) {
+        try {
+          const messages = JSON.parse(text);
+          if (!Array.isArray(messages)) throw new Error("格式错误");
+          const list = document.getElementById("messagesList");
+          list.querySelectorAll(".msg-card.user-msg").forEach((el) => el.remove());
+          const userMessages = [];
+          messages.forEach((m) => {
+            if (m.nickname && m.content) {
+              const card = createMessageCard(m.nickname, m.email, m.cuisine, m.rating, m.content, m.date);
+              list.insertBefore(card, list.firstChild);
+              userMessages.push(m);
+            }
+          });
+          saveMessages();
+          alert(`✓ 已从 "${filename}" 导入 ${userMessages.length} 条留言！`);
+        } catch (e) {
+          alert("✗ 文件格式不正确，请选择有效的留言备份文件（.json）。");
+        }
       }
 
       // 页面加载时恢复留言
