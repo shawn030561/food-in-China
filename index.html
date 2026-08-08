@@ -2949,13 +2949,14 @@
       });
 
       // ===================================================
-      // 7b. 文件持久化（messages.json）— 跨浏览器共享
+      // 7b. 持久化 — 自动选择：服务器 API / 本地文件 / localStorage
       // ===================================================
-      // 优先级：IndexedDB 文件句柄 > fetch 本地文件 > localStorage 回退
+      const IS_SERVER = window.location.protocol !== "file:";
+      const API_BASE = IS_SERVER ? "/api" : null;
       const STORAGE_KEY = "shizaizhongguo_messages";
       const IDB_NAME = "shizaizhongguo_fs";
       const IDB_STORE = "handles";
-      let fileHandle = null;           // FileSystemFileHandle，用于读写 messages.json
+      let fileHandle = null;           // FileSystemFileHandle（仅本地模式使用）
 
       // ---- IndexedDB 存取文件句柄 ----
       function openIdb() {
@@ -3043,17 +3044,25 @@
         return messages;
       }
 
-      // ---- 同步保存（文件 + localStorage 双保险） ----
+      // ---- 保存留言（服务器模式 → API，本地模式 → 文件 + localStorage） ----
       async function saveMessages() {
         const messages = collectUserMessages();
 
-        // 1) 写入文件（如果有句柄）
+        if (IS_SERVER) {
+          // 服务器模式：无需保存，因为 submitForm 已通过 POST /api/messages 提交
+          // 这里只做 localStorage 兜底
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+          } catch (e) { /* ignore */ }
+          return;
+        }
+
+        // 本地模式：写入文件（如果有句柄）+ localStorage 兜底
         if (fileHandle) {
           const ok = await writeMessagesToHandle(fileHandle, messages);
           updateSyncStatus(ok ? "file" : "local");
         }
 
-        // 2) localStorage 兜底
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
         } catch (e) { /* ignore */ }
@@ -3109,11 +3118,16 @@
       // ---- 同步状态指示 ----
       function updateSyncStatus(state) {
         const el = document.getElementById("syncStatus");
+        const btn = document.getElementById("btnFileAccess");
         if (!el) return;
-        if (state === "file") {
+        if (state === "server") {
+          el.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span> 服务器同步';
+          el.className = "text-xs text-blue-600 flex items-center gap-1";
+          if (btn) btn.classList.add("hidden");
+        } else if (state === "file") {
           el.innerHTML = '<span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span> 文件同步';
           el.className = "text-xs text-green-600 flex items-center gap-1";
-          document.getElementById("btnFileAccess").classList.add("hidden");
+          if (btn) btn.classList.add("hidden");
         } else if (state === "local") {
           el.innerHTML = '<span class="w-2 h-2 rounded-full bg-yellow-500 inline-block"></span> 浏览器存储';
           el.className = "text-xs text-yellow-600 flex items-center gap-1";
@@ -3161,7 +3175,38 @@
 
       // ---- 页面初始化：加载留言 ----
       async function loadMessages() {
-        // 1) 尝试从 IndexedDB 获取已保存的文件句柄
+        if (IS_SERVER) {
+          // === 服务器模式：从 API 读取 ===
+          try {
+            const resp = await fetch(API_BASE + "/messages");
+            if (!resp.ok) throw new Error("API error");
+            const data = await resp.json();
+            if (Array.isArray(data)) {
+              renderUserMessages(data);
+              try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+              updateSyncStatus("server");
+              return;
+            }
+          } catch (e) {
+            console.warn("API 加载失败，尝试 localStorage 回退:", e.message);
+          }
+          // API 失败 → 回退到 localStorage
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+              const messages = JSON.parse(raw);
+              if (Array.isArray(messages) && messages.length > 0) {
+                renderUserMessages(messages);
+                updateSyncStatus("local");
+                return;
+              }
+            }
+          } catch (e) { /* ignore */ }
+          updateSyncStatus("none");
+          return;
+        }
+
+        // === 本地模式：现有 IndexedDB > fetch > localStorage 回退逻辑 ===
         const handle = await loadHandleFromIdb();
         if (handle) {
           const messages = await readMessagesFromHandle(handle);
@@ -3331,32 +3376,72 @@
         const cuisine = document.getElementById("cuisine").value || "美食";
         const today = new Date().toLocaleDateString("zh-CN");
 
-        const card = createMessageCard(
-          nickname,
-          email,
-          cuisine,
-          currentRating,
-          content,
-          today,
-        );
+        // 构建留言数据
+        const messageData = {
+          nickname: nickname,
+          email: email,
+          cuisine: cuisine,
+          rating: currentRating,
+          content: content,
+          date: today,
+        };
 
-        const list = document.getElementById("messagesList");
-        list.insertBefore(card, list.firstChild);
+        if (IS_SERVER) {
+          // === 服务器模式：POST 到 API ===
+          fetch(API_BASE + "/messages", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(messageData),
+          })
+            .then(async (resp) => {
+              if (!resp.ok) {
+                const err = await resp.json();
+                throw new Error((err.errors || ["提交失败"]).join("；"));
+              }
+              const result = await resp.json();
+              // 使用服务端返回的日期（可能略有不同）
+              const card = createMessageCard(
+                result.message.nickname,
+                result.message.email,
+                result.message.cuisine,
+                result.message.rating,
+                result.message.content,
+                result.message.date,
+              );
+              const list = document.getElementById("messagesList");
+              list.insertBefore(card, list.firstChild);
+              // localStorage 兜底
+              const msgs = collectUserMessages();
+              msgs.push(result.message);
+              try { localStorage.setItem(STORAGE_KEY, JSON.stringify(msgs)); } catch (e) {}
+              resetForm();
+            })
+            .catch((err) => {
+              alert("提交失败：" + err.message);
+            });
+        } else {
+          // === 本地模式：直接渲染 ===
+          const card = createMessageCard(
+            nickname, email, cuisine, currentRating, content, today,
+          );
+          const list = document.getElementById("messagesList");
+          list.insertBefore(card, list.firstChild);
+          saveMessages();
+          resetForm();
+        }
+      }
 
-        // 持久化保存
-        saveMessages();
-
-        // 重置
+      function resetForm() {
         ["nickname", "email", "content"].forEach(
           (id) => (document.getElementById(id).value = ""),
         );
         document.getElementById("cuisine").selectedIndex = 0;
         setRating(0);
         updateCounter();
-
         const msg = document.getElementById("successMsg");
         msg.classList.remove("hidden");
         setTimeout(() => msg.classList.add("hidden"), 4000);
+        const list = document.getElementById("messagesList");
         list.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     </script>

@@ -1,0 +1,13 @@
+{
+  "name": "food-in-china",
+  "version": "1.0.0",
+  "description": "食在中国 — 地方美食文化展示平台",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "cors": "^2.8.5"
+  }
+}
