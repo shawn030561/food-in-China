@@ -1,1 +1,10 @@
-
+services:
+  - type: web
+    name: food-in-China
+    runtime: node
+    plan: free # 免费套餐
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: PORT
+        value: 10000
