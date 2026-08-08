@@ -9,181 +9,201 @@
       rel="stylesheet"
     />
     <style>
+      /* ==========================================
+         色彩体系（中国传统色）
+         ========================================== */
+      :root {
+        --red:    #b5342e;   /* 朱砂红 — 主色调 */
+        --gold:   #c9a23b;   /* 鎏金 — 点缀色 */
+        --cream:  #fdf9f3;   /* 宣纸白 — 页面底色 */
+        --ink:    #1f1a17;   /* 松烟墨 — 正文 */
+        --char:   #5c554f;   /* 石墨 — 次级文字 */
+        --mist:   #f4efe7;   /* 薄雾灰 — 分区背景 */
+        --dark:   #120904;   /* 玄黑 — 深色区底色 */
+      }
+
       body {
         font-family: "Noto Sans SC", sans-serif;
-        background: #fdf8f0;
-        color: #1a1a1a;
+        background: linear-gradient(to bottom, #fdf9f3 0%, #faf6ee 100%);
+        color: #1f1a17;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
+
+      /* ---- 排版增强 ---- */
+      h1, h2, h3, h4 { font-family: "Noto Serif SC", serif; }
+      p { line-height: 1.85; }
+      .font-serif { letter-spacing: 0.02em; }
+
+      /* ---- 深色 Hero 背景 ---- */
       .hero-bg {
         background: linear-gradient(
-          135deg,
-          #1a0800 0%,
-          #3d1a0a 40%,
-          #1a0800 100%
+          150deg,
+          #120904 0%,
+          #1e0d07 35%,
+          #2a100a 65%,
+          #120904 100%
         );
       }
       .pattern-bg {
-        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C0392B' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23B5342E' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
       }
 
-      /* 导航 */
+      /* ---- 导航 ---- */
       .nav-link {
-        color: rgba(253, 248, 240, 0.8);
+        color: rgba(253, 249, 243, 0.82);
         font-size: 0.875rem;
         letter-spacing: 0.1em;
-        transition: color 0.2s;
+        transition: all 0.25s ease;
         cursor: pointer;
+        padding-bottom: 2px;
+        border-bottom: 1px solid transparent;
       }
-      .nav-link:hover,
-      .nav-link.active {
-        color: #d4a843;
+      .nav-link:hover {
+        color: #c9a23b;
+        border-bottom-color: rgba(201, 162, 59, 0.35);
       }
       .nav-link.active {
-        border-bottom: 1px solid #d4a843;
+        color: #c9a23b;
+        border-bottom: 1px solid #c9a23b;
       }
 
-      /* 页面切换 */
-      .page {
-        display: none;
-      }
+      /* ---- 页面切换 ---- */
+      .page { display: none; }
       .page.active {
         display: block;
-        animation: fadeIn 0.4s ease;
+        animation: fadeIn 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
       }
       @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(8px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
       }
 
-      /* 轮播 */
-      .carousel-item {
-        display: none;
-      }
+      /* ---- 轮播 ---- */
+      .carousel-item { display: none; }
       .carousel-item.active {
         display: block;
-        animation: fadeIn 0.5s ease;
+        animation: fadeIn 0.55s ease;
       }
 
-      /* 卡片悬停 */
+      /* ---- 通用卡片悬停 ---- */
       .card-hover {
-        transition: all 0.3s;
+        transition: all 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
       }
       .card-hover:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+        transform: translateY(-6px);
+        box-shadow: 0 24px 48px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.05);
       }
 
-      /* 按钮 */
+      /* ---- 主按钮 ---- */
       .btn-primary {
-        background: #c0392b;
-        color: white;
-        padding: 0.75rem 1.5rem;
+        background: #b5342e;
+        color: #fff;
+        padding: 0.75rem 1.75rem;
         font-size: 0.875rem;
-        letter-spacing: 0.1em;
-        transition: background 0.2s;
+        letter-spacing: 0.12em;
+        font-weight: 500;
+        transition: all 0.25s ease;
         cursor: pointer;
         border: none;
         display: inline-block;
+        box-shadow: 0 2px 8px rgba(181, 52, 46, 0.25);
       }
       .btn-primary:hover {
-        background: #a93226;
+        background: #9b2d28;
+        box-shadow: 0 6px 20px rgba(181, 52, 46, 0.35);
+        transform: translateY(-1px);
       }
 
-      /* 筛选按钮 */
+      /* ---- 筛选按钮 ---- */
       .filter-btn {
-        padding: 0.4rem 1.2rem;
+        padding: 0.45rem 1.3rem;
         font-size: 0.75rem;
         letter-spacing: 0.12em;
-        border: 1px solid #d1d5db;
+        border: 1px solid #d6cfc6;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.25s ease;
         font-family: "Noto Sans SC", sans-serif;
-        background: white;
+        background: #fff;
+        color: #5c554f;
+        border-radius: 2px;
       }
       .filter-btn.active,
       .filter-btn:hover {
-        background: #c0392b;
-        color: white;
-        border-color: #c0392b;
+        background: #b5342e;
+        color: #fff;
+        border-color: #b5342e;
+        box-shadow: 0 2px 8px rgba(181, 52, 46, 0.2);
       }
 
-      /* 表单 */
+      /* ---- 表单 ---- */
       .form-input {
         width: 100%;
-        padding: 0.625rem 1rem;
-        border: 1px solid #e5e7eb;
-        background: white;
+        padding: 0.7rem 1rem;
+        border: 1px solid #e2dcd5;
+        background: #fff;
         font-family: "Noto Sans SC", sans-serif;
         font-size: 0.875rem;
-        transition: border-color 0.2s;
+        transition: all 0.25s ease;
         outline: none;
         box-sizing: border-box;
+        color: #1f1a17;
       }
+      .form-input::placeholder { color: #b8b0a6; }
       .form-input:focus {
-        border-color: #c0392b;
+        border-color: #b5342e;
+        box-shadow: 0 0 0 3px rgba(181, 52, 46, 0.08);
       }
       .form-input.error {
-        border-color: #ef4444;
+        border-color: #dc2626;
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.06);
       }
       .error-msg {
-        color: #ef4444;
+        color: #dc2626;
         font-size: 0.75rem;
-        margin-top: 0.25rem;
+        margin-top: 0.3rem;
         display: none;
       }
-      .error-msg.show {
-        display: block;
-      }
+      .error-msg.show { display: block; }
       .char-counter {
         font-size: 0.75rem;
-        color: #9ca3af;
+        color: #b8b0a6;
         text-align: right;
       }
-      .char-counter.warn {
-        color: #f59e0b;
-      }
-      .char-counter.over {
-        color: #ef4444;
-      }
+      .char-counter.warn { color: #d97706; }
+      .char-counter.over { color: #dc2626; }
       .rating-star {
         cursor: pointer;
         font-size: 1.5rem;
-        transition: transform 0.1s;
+        transition: all 0.15s ease;
+        color: #c9a23b;
       }
-      .rating-star:hover {
-        transform: scale(1.2);
-      }
+      .rating-star:hover { transform: scale(1.25); }
 
-      /* 弹窗 */
+      /* ---- 弹窗 ---- */
       .modal {
         display: none;
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.7);
+        background: rgba(18, 9, 4, 0.78);
         z-index: 200;
         align-items: center;
         justify-content: center;
-        padding: 1rem;
+        padding: 1.5rem;
+        backdrop-filter: blur(2px);
       }
-      .modal.open {
-        display: flex;
-      }
+      .modal.open { display: flex; }
       .modal-content {
-        background: #fdf8f0;
-        max-width: 600px;
+        background: #fdf9f3;
+        max-width: 620px;
         width: 100%;
         max-height: 90vh;
         overflow-y: auto;
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3);
       }
       .step-num {
-        background: #c0392b;
-        color: white;
+        background: #b5342e;
+        color: #fff;
         width: 28px;
         height: 28px;
         border-radius: 50%;
@@ -192,9 +212,10 @@
         justify-content: center;
         font-size: 0.75rem;
         flex-shrink: 0;
+        font-weight: 600;
       }
 
-      /* 时间轴 */
+      /* ---- 时间轴 ---- */
       .timeline-item {
         position: relative;
         padding-left: 2.5rem;
@@ -206,7 +227,7 @@
         top: 0;
         bottom: 0;
         width: 1px;
-        background: #e5e7eb;
+        background: #d6cfc6;
       }
       .timeline-dot {
         position: absolute;
@@ -214,62 +235,66 @@
         top: 0.375rem;
         width: 1.25rem;
         height: 1.25rem;
-        background: #c0392b;
+        background: #b5342e;
         border-radius: 50%;
-        border: 2px solid #fdf8f0;
-        box-shadow: 0 0 0 2px #c0392b;
+        border: 2px solid #fdf9f3;
+        box-shadow: 0 0 0 2px #b5342e;
       }
 
-      /* 留言卡片动画 */
+      /* ---- 留言卡片 ---- */
       @keyframes slideIn {
-        from {
-          opacity: 0;
-          transform: translateY(-10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(-12px); }
+        to   { opacity: 1; transform: translateY(0); }
       }
       .msg-card {
-        animation: slideIn 0.4s ease;
+        animation: slideIn 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+        transition: box-shadow 0.3s ease, border-color 0.3s ease;
+      }
+      .msg-card:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+        border-color: #d6cfc6;
       }
 
-      /* 菜谱卡片 */
+      /* ---- 菜谱卡片 ---- */
       .recipe-card {
         cursor: pointer;
-        transition: all 0.3s;
+        transition: all 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+        border-radius: 2px;
       }
       .recipe-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+        transform: translateY(-6px);
+        box-shadow: 0 24px 48px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.04);
       }
 
-      /* 美食图片背景卡片通用样式 */
+      /* ---- 美食图片卡片 ---- */
       .food-card-bg {
         position: relative;
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
         overflow: hidden;
+        border-radius: 2px;
       }
-      /* 深色渐变遮罩，保证文字看清 */
       .food-card-bg::after {
         content: "";
         position: absolute;
         inset: 0;
         background: linear-gradient(
           to top,
-          rgba(0, 0, 0, 0.75) 0%,
-          rgba(0, 0, 0, 0.1) 60%,
+          rgba(18, 9, 4, 0.82) 0%,
+          rgba(18, 9, 4, 0.15) 55%,
           transparent 100%
         );
         z-index: 1;
       }
-      /* 卡片内部文字内容提升层级，浮在遮罩上方 */
       .food-card-content {
         position: relative;
         z-index: 2;
+      }
+
+      /* ---- 统计数字区块 ---- */
+      .stat-section {
+        background: linear-gradient(135deg, #b5342e 0%, #9b2d28 50%, #7f231f 100%);
       }
     </style>
   </head>
@@ -689,7 +714,7 @@
       </section>
 
       <!-- 数据统计 -->
-      <section class="bg-vermilion text-white py-12">
+      <section class="stat-section text-white py-12">
         <div class="max-w-6xl mx-auto px-4 md:px-6">
           <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div>
@@ -1912,7 +1937,7 @@
           </div>
         </div>
         <div class="border-t border-white/10 mt-8 pt-6 text-center text-xs">
-          © 2026 食在中国 · 地方美食文化展示平台 · 仅供学习交流使用 · <span style="color:#D4A843;">v2.1 已修复</span>
+          © 2026 食在中国 · 地方美食文化展示平台 · 仅供学习交流使用 · <span style="color:#c9a23b;">v2.2 视觉焕新</span>
         </div>
       </div>
     </footer>
@@ -3531,11 +3556,11 @@
         theme: {
           extend: {
             colors: {
-              vermilion: "#C0392B",
-              gold: "#D4A843",
-              inkblack: "#1A1A1A",
-              cream: "#FDF8F0",
-              mist: "#F5F0E8",
+              vermilion: "#b5342e",
+              gold: "#c9a23b",
+              inkblack: "#1f1a17",
+              cream: "#fdf9f3",
+              mist: "#f4efe7",
             },
             fontFamily: {
               serif: ['"Noto Serif SC"', "serif"],
