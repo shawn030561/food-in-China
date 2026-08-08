@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>食在中国 — 地方美食文化展示</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap"
       rel="stylesheet"
@@ -2949,16 +2950,28 @@
       });
 
       // ===================================================
-      // 7b. 持久化 — 自动选择：服务器 API / 本地文件 / localStorage
+      // 7b. 持久化 — Supabase 云端 → 服务器 API → 本地文件 自动降级
       // ===================================================
-      const IS_SERVER = window.location.protocol !== "file:";
-      const API_BASE = IS_SERVER ? "/api" : null;
-      const STORAGE_KEY = "shizaizhongguo_messages";
-      const IDB_NAME = "shizaizhongguo_fs";
-      const IDB_STORE = "handles";
-      let fileHandle = null;           // FileSystemFileHandle（仅本地模式使用）
+      // ★ 在 Supabase 创建项目后，替换下面的 URL 和 KEY
+      const SUPABASE_URL = 'https://xxxxxxxxxxxx.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.xxx';
+      const IS_SUPABASE = SUPABASE_URL && !SUPABASE_URL.includes('xxxxxxxxxxxx');
 
-      // ---- IndexedDB 存取文件句柄 ----
+      const IS_SERVER = !IS_SUPABASE && window.location.protocol !== 'file:';
+      const API_BASE = IS_SERVER ? '/api' : null;
+      const STORAGE_KEY = 'shizaizhongguo_messages';
+      const IDB_NAME = 'shizaizhongguo_fs';
+      const IDB_STORE = 'handles';
+      let fileHandle = null;           // FileSystemFileHandle（仅本地模式）
+      let supabase = null;            // Supabase 客户端
+
+      if (IS_SUPABASE) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      }
+
+      // ===================================================
+      // ========== IndexedDB 文件句柄（本地模式）==========
+      // ===================================================
       function openIdb() {
         return new Promise((resolve, reject) => {
           const req = indexedDB.open(IDB_NAME, 1);
@@ -3044,28 +3057,29 @@
         return messages;
       }
 
-      // ---- 保存留言（服务器模式 → API，本地模式 → 文件 + localStorage） ----
+      // ---- 保存留言 ----
       async function saveMessages() {
         const messages = collectUserMessages();
 
-        if (IS_SERVER) {
-          // 服务器模式：无需保存，因为 submitForm 已通过 POST /api/messages 提交
-          // 这里只做 localStorage 兜底
+        if (IS_SUPABASE) {
+          // Supabase 模式：提交时已写入数据库，此处仅做 localStorage 本地镜像
           try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
           } catch (e) { /* ignore */ }
           return;
         }
 
-        // 本地模式：写入文件（如果有句柄）+ localStorage 兜底
+        if (IS_SERVER) {
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(messages)); } catch (e) {}
+          return;
+        }
+
+        // 本地模式
         if (fileHandle) {
           const ok = await writeMessagesToHandle(fileHandle, messages);
           updateSyncStatus(ok ? "file" : "local");
         }
-
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-        } catch (e) { /* ignore */ }
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(messages)); } catch (e) {}
       }
 
       // ---- 渲染留言卡片 ----
@@ -3120,7 +3134,11 @@
         const el = document.getElementById("syncStatus");
         const btn = document.getElementById("btnFileAccess");
         if (!el) return;
-        if (state === "server") {
+        if (state === "supabase") {
+          el.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Supabase 云端';
+          el.className = "text-xs text-emerald-600 flex items-center gap-1";
+          if (btn) btn.classList.add("hidden");
+        } else if (state === "server") {
           el.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span> 服务器同步';
           el.className = "text-xs text-blue-600 flex items-center gap-1";
           if (btn) btn.classList.add("hidden");
@@ -3175,22 +3193,29 @@
 
       // ---- 页面初始化：加载留言 ----
       async function loadMessages() {
-        if (IS_SERVER) {
-          // === 服务器模式：从 API 读取 ===
+        // === 第1优先级：Supabase 云端数据库 ===
+        if (IS_SUPABASE && supabase) {
           try {
-            const resp = await fetch(API_BASE + "/messages");
-            if (!resp.ok) throw new Error("API error");
-            const data = await resp.json();
-            if (Array.isArray(data)) {
-              renderUserMessages(data);
-              try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
-              updateSyncStatus("server");
+            const { data, error } = await supabase
+              .from('messages')
+              .select('*')
+              .order('created_at', { ascending: false });
+            if (!error && Array.isArray(data)) {
+              // 转换为前端格式（去掉 id/created_at，保留业务字段）
+              const messages = data.map(m => ({
+                nickname: m.nickname, email: m.email || '', cuisine: m.cuisine || '',
+                rating: m.rating || 0, content: m.content, date: m.date || '',
+              }));
+              renderUserMessages(messages);
+              try { localStorage.setItem(STORAGE_KEY, JSON.stringify(messages)); } catch (e) {}
+              updateSyncStatus("supabase");
               return;
             }
+            console.warn('Supabase 读取失败:', error);
           } catch (e) {
-            console.warn("API 加载失败，尝试 localStorage 回退:", e.message);
+            console.warn('Supabase 连接失败，尝试本地回退:', e.message);
           }
-          // API 失败 → 回退到 localStorage
+          // Supabase 失败 → 回退 localStorage
           try {
             const raw = localStorage.getItem(STORAGE_KEY);
             if (raw) {
@@ -3201,12 +3226,13 @@
                 return;
               }
             }
-          } catch (e) { /* ignore */ }
+          } catch (e) {}
           updateSyncStatus("none");
           return;
         }
 
-        // === 本地模式：现有 IndexedDB > fetch > localStorage 回退逻辑 ===
+        // === 第2优先级：Express 服务器 API ===
+        if (IS_SERVER) {
         const handle = await loadHandleFromIdb();
         if (handle) {
           const messages = await readMessagesFromHandle(handle);
@@ -3347,7 +3373,7 @@
       // 页面加载时恢复留言
       loadMessages();
 
-      function submitForm() {
+      async function submitForm() {
         let valid = true;
         const nickname = document.getElementById("nickname").value.trim();
         const email = document.getElementById("email").value.trim();
@@ -3386,6 +3412,33 @@
           date: today,
         };
 
+        if (IS_SUPABASE && supabase) {
+          // === Supabase 模式：INSERT 到云端数据库 ===
+          const { data, error } = await supabase
+            .from('messages')
+            .insert([{
+              nickname: messageData.nickname,
+              email: messageData.email,
+              cuisine: messageData.cuisine,
+              rating: messageData.rating,
+              content: messageData.content,
+              date: messageData.date,
+            }])
+            .select();
+          if (error) { alert('提交失败：' + error.message); return; }
+          // 用数据库返回的数据渲染（有 id/created_at）
+          if (data && data[0]) {
+            const m = data[0];
+            const card = createMessageCard(m.nickname, m.email, m.cuisine, m.rating, m.content, m.date);
+            document.getElementById("messagesList").insertBefore(card, document.getElementById("messagesList").firstChild);
+            // 同步 localStorage 镜像
+            const msgs = collectUserMessages();
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(msgs)); } catch (e) {}
+          }
+          resetForm();
+          return;
+        }
+
         if (IS_SERVER) {
           // === 服务器模式：POST 到 API ===
           fetch(API_BASE + "/messages", {
@@ -3399,26 +3452,16 @@
                 throw new Error((err.errors || ["提交失败"]).join("；"));
               }
               const result = await resp.json();
-              // 使用服务端返回的日期（可能略有不同）
               const card = createMessageCard(
-                result.message.nickname,
-                result.message.email,
-                result.message.cuisine,
-                result.message.rating,
-                result.message.content,
-                result.message.date,
+                result.message.nickname, result.message.email,
+                result.message.cuisine, result.message.rating,
+                result.message.content, result.message.date,
               );
-              const list = document.getElementById("messagesList");
-              list.insertBefore(card, list.firstChild);
-              // localStorage 兜底
-              const msgs = collectUserMessages();
-              msgs.push(result.message);
-              try { localStorage.setItem(STORAGE_KEY, JSON.stringify(msgs)); } catch (e) {}
+              document.getElementById("messagesList").insertBefore(card, document.getElementById("messagesList").firstChild);
+              saveMessages();
               resetForm();
             })
-            .catch((err) => {
-              alert("提交失败：" + err.message);
-            });
+            .catch((err) => { alert("提交失败：" + err.message); });
         } else {
           // === 本地模式：直接渲染 ===
           const card = createMessageCard(
