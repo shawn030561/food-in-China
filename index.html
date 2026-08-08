@@ -4,31 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>食在中国 — 地方美食文化展示</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap"
       rel="stylesheet"
     />
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              vermilion: "#C0392B",
-              gold: "#D4A843",
-              inkblack: "#1A1A1A",
-              cream: "#FDF8F0",
-              mist: "#F5F0E8",
-            },
-            fontFamily: {
-              serif: ['"Noto Serif SC"', "serif"],
-              sans: ['"Noto Sans SC"', "sans-serif"],
-            },
-          },
-        },
-      };
-    </script>
     <style>
       body {
         font-family: "Noto Sans SC", sans-serif;
@@ -1933,7 +1912,7 @@
           </div>
         </div>
         <div class="border-t border-white/10 mt-8 pt-6 text-center text-xs">
-          © 2026 食在中国 · 地方美食文化展示平台 · 仅供学习交流使用
+          © 2026 食在中国 · 地方美食文化展示平台 · 仅供学习交流使用 · <span style="color:#D4A843;">v2.1 已修复</span>
         </div>
       </div>
     </footer>
@@ -2953,8 +2932,8 @@
       // 7b. 持久化 — Supabase 云端 → 服务器 API → 本地文件 自动降级
       // ===================================================
       // ★ 在 Supabase 创建项目后，替换下面的 URL 和 KEY
-      const SUPABASE_URL = 'https://xxxxxxxxxxxx.supabase.co';
-      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.xxx';
+      const SUPABASE_URL = 'https://zabvziwvaiwtvhlfyizq.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InphYnZ6aXd2YWl3dHZobGZ5aXpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxODA3MjQsImV4cCI6MjEwMTc1NjcyNH0.J4vMTzfHcEmAEDFrf4qKN24zQLkmVgL1-FpaFpHxONM';
       const IS_SUPABASE = SUPABASE_URL && !SUPABASE_URL.includes('xxxxxxxxxxxx');
 
       const IS_SERVER = !IS_SUPABASE && window.location.protocol !== 'file:';
@@ -2966,7 +2945,54 @@
       let supabase = null;            // Supabase 客户端
 
       if (IS_SUPABASE) {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // 动态加载 Supabase SDK（不阻塞页面渲染）
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+        script.onload = function() {
+          try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('✅ Supabase 云端已连接');
+            // SDK 加载完成 → 从云端拉取留言
+            loadMessagesFromSupabase();
+            updateSyncStatus('supabase');
+          } catch (e) {
+            console.warn('⚠️ Supabase 初始化失败，使用本地存储', e.message);
+          }
+        };
+        script.onerror = function() {
+          console.warn('⚠️ Supabase SDK 加载失败（CDN 不可达），使用本地存储');
+        };
+        // 5 秒超时回退
+        setTimeout(function() {
+          if (!supabase) {
+            script.onerror = null;
+            script.onload = null;
+            console.warn('⚠️ Supabase SDK 加载超时，使用本地存储');
+          }
+        }, 5000);
+        document.head.appendChild(script);
+      }
+
+      // 仅 Supabase 模式：从云端拉取
+      async function loadMessagesFromSupabase() {
+        try {
+          const { data, error } = await supabase
+            .from('messages')
+            .select('*')
+            .order('created_at', { ascending: false });
+          if (!error && Array.isArray(data)) {
+            const messages = data.map(function(m) { return {
+              nickname: m.nickname, email: m.email || '', cuisine: m.cuisine || '',
+              rating: m.rating || 0, content: m.content, date: m.date || '',
+            };});
+            renderUserMessages(messages);
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(messages)); } catch (e) {}
+            return;
+          }
+          console.warn('Supabase 读取失败:', error);
+        } catch (e) {
+          console.warn('Supabase 连接失败:', e.message);
+        }
       }
 
       // ===================================================
@@ -3149,11 +3175,11 @@
         } else if (state === "local") {
           el.innerHTML = '<span class="w-2 h-2 rounded-full bg-yellow-500 inline-block"></span> 浏览器存储';
           el.className = "text-xs text-yellow-600 flex items-center gap-1";
-          document.getElementById("btnFileAccess").classList.remove("hidden");
+          if (btn) btn.classList.remove("hidden");
         } else {
           el.innerHTML = '<span class="w-2 h-2 rounded-full bg-gray-300 inline-block"></span> 无存储';
           el.className = "text-xs text-inkblack/40 flex items-center gap-1";
-          document.getElementById("btnFileAccess").classList.remove("hidden");
+          if (btn) btn.classList.remove("hidden");
         }
       }
 
@@ -3193,29 +3219,39 @@
 
       // ---- 页面初始化：加载留言 ----
       async function loadMessages() {
-        // === 第1优先级：Supabase 云端数据库 ===
-        if (IS_SUPABASE && supabase) {
+        // Supabase 模式：SDK 异步加载中，先显示本地缓存，SDK 就绪后自动切换
+        if (IS_SUPABASE) {
+          updateSyncStatus('supabase');  // 先显示云端图标（加载中）
+          // 先加载 localStorage 缓存（秒开）
           try {
-            const { data, error } = await supabase
-              .from('messages')
-              .select('*')
-              .order('created_at', { ascending: false });
-            if (!error && Array.isArray(data)) {
-              // 转换为前端格式（去掉 id/created_at，保留业务字段）
-              const messages = data.map(m => ({
-                nickname: m.nickname, email: m.email || '', cuisine: m.cuisine || '',
-                rating: m.rating || 0, content: m.content, date: m.date || '',
-              }));
-              renderUserMessages(messages);
-              try { localStorage.setItem(STORAGE_KEY, JSON.stringify(messages)); } catch (e) {}
-              updateSyncStatus("supabase");
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+              const messages = JSON.parse(raw);
+              if (Array.isArray(messages) && messages.length > 0) {
+                renderUserMessages(messages);
+              }
+            }
+          } catch (e) {}
+          // SDK 加载完成后会调用 loadMessagesFromSupabase() 自动刷新
+          return;
+        }
+
+        // === Express 服务器 API（node server.js 启动时） ===
+        if (IS_SERVER) {
+          try {
+            const resp = await fetch(API_BASE + "/messages");
+            if (!resp.ok) throw new Error("API error");
+            const data = await resp.json();
+            if (Array.isArray(data)) {
+              renderUserMessages(data);
+              try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+              updateSyncStatus("server");
               return;
             }
-            console.warn('Supabase 读取失败:', error);
           } catch (e) {
-            console.warn('Supabase 连接失败，尝试本地回退:', e.message);
+            console.warn("API 加载失败，尝试回退:", e.message);
           }
-          // Supabase 失败 → 回退 localStorage
+          // API 失败 → localStorage
           try {
             const raw = localStorage.getItem(STORAGE_KEY);
             if (raw) {
@@ -3226,13 +3262,12 @@
                 return;
               }
             }
-          } catch (e) {}
+          } catch (e) { /* ignore */ }
           updateSyncStatus("none");
           return;
         }
 
-        // === 第2优先级：Express 服务器 API ===
-        if (IS_SERVER) {
+        // === 本地 file:// 模式：IndexedDB > fetch > localStorage ===
         const handle = await loadHandleFromIdb();
         if (handle) {
           const messages = await readMessagesFromHandle(handle);
@@ -3488,5 +3523,28 @@
         list.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     </script>
+
+    <!-- Tailwind CSS CDN（在主脚本之后加载，不阻塞页面交互） -->
+    <script>
+      window.tailwind = window.tailwind || {};
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              vermilion: "#C0392B",
+              gold: "#D4A843",
+              inkblack: "#1A1A1A",
+              cream: "#FDF8F0",
+              mist: "#F5F0E8",
+            },
+            fontFamily: {
+              serif: ['"Noto Serif SC"', "serif"],
+              sans: ['"Noto Sans SC"', "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+    <script src="https://cdn.tailwindcss.com" async></script>
   </body>
 </html>
